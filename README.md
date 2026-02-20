@@ -25,12 +25,13 @@ VizNode is an experimental project bridging console-based Node.js applications w
 ---
 
 ## Project Structure
+```
 VizNode/
 ├─ README.md # Project description and concept
 ├─ src/ # Node.js source code
 ├─ examples/ # Console blocks and visualization demos
 ├─ docs/ # Notes, diagrams, and additional materials
-
+```
 
 ---
 
