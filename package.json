@@ -1,0 +1,17 @@
+{
+  "name": "viznode",
+  "version": "1.0.0",
+  "description": "**Author:** Mark Kozynda, Russia, February 2026",
+  "main": "src/main.js",
+  "type": "module",
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "CC-BY-4.0"
+}
