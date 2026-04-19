@@ -11,6 +11,7 @@ const state = {
   },
 };
 
+
 // ---------- NODE FACTORIES -----------
 function textNode(text) {
 	return {
@@ -39,8 +40,6 @@ function menuNode(title, items = []) {
 		props: {title, items},
 	};
 }
-
-
 
 
 // ---------------- BUILD TREE ----------------
@@ -94,6 +93,7 @@ function buildTree(currentState) {
   ];
 }
 
+
 // ---------------- RENDER CONSOLE ----------------
 function renderConsole(tree) {
   console.clear();
@@ -116,20 +116,14 @@ function renderConsole(tree) {
       for (const item of node.props.items) {
         if (item.type === "action") {
           console.log(`${index}. ${item.props.label}`);
-          actionMap[String(index)] = {
-            type: "action",
-            id: item.props.id,
-          };
+          actionMap[String(index)] = item
           index += 1;
         }
 
         if (item.type === "input") {
           const shownValue = item.props.value || `[${item.props.placeholder}]`;
           console.log(`${index}. ${item.props.label}: ${shownValue}`);
-          actionMap[String(index)] = {
-            type: "input",
-            id: item.props.id,
-          };
+          actionMap[String(index)] = item
           index += 1;
         }
 
@@ -147,8 +141,8 @@ function renderConsole(tree) {
 
 
 // ---------------- HANDLE ACTION ----------------
-function handleAction(actionId) {
-  switch (actionId) {
+function handleAction(target) {
+  switch (target.props.id) {
 		case "show_balance":
     	state.screen = "balance";
     	return true;
@@ -178,24 +172,18 @@ function handleAction(actionId) {
 	}
 }
 
-function handleInputEdit(inputId) {
-  if (inputId === "recipient") {
-    rl.question("Recipient: ", (value) => {
-      state.transferForm.recipient = value.trim();
-      loop();
-    });
-    return;
-  }
+function handleInputEdit(target) {
+  const {id, label} = target.props;
 
-  if (inputId === "amount") {
-    rl.question("Amount: ", (value) => {
-      state.transferForm.amount = value.trim();
-      loop();
-    });
-    return;
-  }
+  rl.question(`${label}: `, (value) => {
+    const trimmed = value.trim();  
+    
+    if (id in state.transferForm) {
+      state.transferForm[`${id}`] = trimmed;
+    }
   
-  loop();
+    loop();
+  });
 }
 
 
@@ -233,12 +221,12 @@ function loop() {
         }  
         
         if (target.type === "input") {
-          handleInputEdit(target.id);
+          handleInputEdit(target);
           return;
         }
 
         if (target.type === "action") {
-          const shouldContinue = handleAction(target.id);
+          const shouldContinue = handleAction(target);
           if (shouldContinue) {
             loop();
           }
