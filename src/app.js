@@ -1,6 +1,16 @@
 import readline from "readline";
 
 
+// ---------------- STATE ----------------
+const state = {
+  screen: "main",
+  balance: 12500,
+  transferForm: {
+    recipient: "",
+    amount: "",
+  },
+};
+
 // ---------- NODE FACTORIES -----------
 function textNode(text) {
 	return {
@@ -16,6 +26,13 @@ function actionNode(id, label) {
 	};
 }
 
+function inputNode(id, label, value = "", placeholder = "") {
+  return {
+    type: "input", 
+    props: {id, label, value, placeholder},
+  };
+}
+
 function menuNode(title, items = []) {
 	return {
 		type: "menu",
@@ -24,11 +41,7 @@ function menuNode(title, items = []) {
 }
 
 
-// ---------------- STATE ----------------
-const state = {
-  screen: "main",
-  balance: 12500,
-};
+
 
 // ---------------- BUILD TREE ----------------
 function buildTree(currentState) {
@@ -54,12 +67,27 @@ function buildTree(currentState) {
 
   if (currentState.screen === "transfer") {
     return [
-			textNode("Transfer screen (stub)"),
-			menuNode("Actions", [
-				actionNode("back", "Back")
-			]),
-		];
-	}
+      textNode("Transfer"),
+      menuNode("Transfer Form", [
+        inputNode(
+          "recipient",
+          "Recipient",
+          currentState.transferForm.recipient,
+          "Enter recipient name"
+        ),
+        inputNode(
+          "amount",
+          "Amount",
+          currentState.transferForm.amount,
+          "Enter amount"
+        ),
+      ]),
+      menuNode("Actions", [
+        actionNode("submit_transfer", "Submit"),
+        actionNode("back", "Back"),
+      ]),
+    ];
+  }
 
   return [
 		textNode("Unknown state")
@@ -88,7 +116,20 @@ function renderConsole(tree) {
       for (const item of node.props.items) {
         if (item.type === "action") {
           console.log(`${index}. ${item.props.label}`);
-          actionMap[String(index)] = item.props.id;
+          actionMap[String(index)] = {
+            type: "action",
+            id: item.props.id,
+          };
+          index += 1;
+        }
+
+        if (item.type === "input") {
+          const shownValue = item.props.value || `[${item.props.placeholder}]`;
+          console.log(`${index}. ${item.props.label}: ${shownValue}`);
+          actionMap[String(index)] = {
+            type: "input",
+            id: item.props.id,
+          };
           index += 1;
         }
 
@@ -104,21 +145,57 @@ function renderConsole(tree) {
   return actionMap;
 }
 
+
 // ---------------- HANDLE ACTION ----------------
 function handleAction(actionId) {
   switch (actionId) {
 		case "show_balance":
     	state.screen = "balance";
-    	return;
-		case "open_transfer":
+    	return true;
+		
+    case "open_transfer":
     	state.screen = "transfer";
-    	return;
+    	return true;
+    
+    case "submit_transfer":
+      console.log("\nTransfer submitted:");
+      console.log(`Recipient: ${state.transferForm.recipient || "(empty)"}`);
+      console.log(`Amount: ${state.transferForm.amount || "(empty)"}`);
+
+      state.transferForm.recipient = "";
+      state.transferForm.amount = "";
+      state.screen = "main";
+    
+      setTimeout(loop, 1200);
+      return false;
+
 		case "back":
     	state.screen = "main";
-  		return;
-		default:
-			return;
+  		return true;
+		
+    default:
+			return true;
 	}
+}
+
+function handleInputEdit(inputId) {
+  if (inputId === "recipient") {
+    rl.question("Recipient: ", (value) => {
+      state.transferForm.recipient = value.trim();
+      loop();
+    });
+    return;
+  }
+
+  if (inputId === "amount") {
+    rl.question("Amount: ", (value) => {
+      state.transferForm.amount = value.trim();
+      loop();
+    });
+    return;
+  }
+  
+  loop();
 }
 
 
@@ -138,6 +215,7 @@ rl.on("close", () => {
 function loop() {
     const tree = buildTree(state);
     const actionMap = renderConsole(tree);
+    
     rl.question("> ", (input) => {
         const trimmed = input.trim();   
 
@@ -146,18 +224,28 @@ function loop() {
           return;
         }   
 
-        const actionId = actionMap[trimmed];    
+        const target = actionMap[trimmed];    
 
-        if (!actionId) {
+        if (!target) {
           console.log("\nInvalid input. Try again.");
           setTimeout(loop, 1000);
           return; // просто повтор
-        }   
-        handleAction(actionId);
-        loop();
+        }  
+        
+        if (target.type === "input") {
+          handleInputEdit(target.id);
+          return;
         }
+
+        if (target.type === "action") {
+          const shouldContinue = handleAction(target.id);
+          if (shouldContinue) {
+            loop();
+          }
+          return;
+        }
+      }
     );
 }
-
 
 loop();
