@@ -1,7 +1,7 @@
 import readline from "readline";
 
 
-// ---------------- STATE ----------------
+// ---------------- APP STATE ----------------
 const state = {
   screen: "main",
   balance: 12500,
@@ -12,7 +12,7 @@ const state = {
 };
 
 
-// ---------- NODE FACTORIES -----------
+// ---------------- NODE FACTORIES ----------------
 function textNode(text) {
 	return {
 		type: "text",
@@ -20,17 +20,17 @@ function textNode(text) {
 	};
 }
 
-function actionNode(id, label) {
+function actionNode(id, label, intent = null) {
 	return {
 		type: "action",
-		props: {id, label},
+		props: {id, label, intent: intent || id},
 	};
 }
 
-function inputNode(id, label, value = "", placeholder = "") {
+function inputNode(id, label, bind, value = "", placeholder = "") {
   return {
     type: "input", 
-    props: {id, label, value, placeholder},
+    props: {id, label, bind, value, placeholder},
   };
 }
 
@@ -41,8 +41,30 @@ function menuNode(title, items = []) {
 	};
 }
 
+// ---------------- STATE BINDING ----------------
+function setByPath(obj, path, value) {
+  const keys = path.split(".");
+  const lastKey = keys.pop();
 
-// ---------------- BUILD TREE ----------------
+  let target = obj;
+  for (let key of keys) {
+    if (!(key in target)) {
+      console.log(`Invalid bind path: ${path}`);
+      return false;
+    }
+    target = target[key];
+  }
+  if (!(lastKey in target)) {
+    console.log(`Invalid bind path: ${path}`);
+    return false;
+  }
+
+  target[lastKey] = value;
+  return true;
+}
+
+
+// ---------------- SCREEN TREE ----------------
 function buildTree(currentState) {
   if (currentState.screen === "main") {
     return [
@@ -71,16 +93,19 @@ function buildTree(currentState) {
         inputNode(
           "recipient",
           "Recipient",
+          "transferForm.recipient",
           currentState.transferForm.recipient,
           "Enter recipient name"
         ),
         inputNode(
           "amount",
           "Amount",
+          "transferForm.amount",
           currentState.transferForm.amount,
           "Enter amount"
         ),
       ]),
+
       menuNode("Actions", [
         actionNode("submit_transfer", "Submit"),
         actionNode("back", "Back"),
@@ -94,7 +119,7 @@ function buildTree(currentState) {
 }
 
 
-// ---------------- RENDER CONSOLE ----------------
+// ---------------- CONSOLE RENDERER ----------------
 function renderConsole(tree) {
   console.clear();
 
@@ -140,54 +165,59 @@ function renderConsole(tree) {
 }
 
 
-// ---------------- HANDLE ACTION ----------------
-function handleAction(target) {
-  switch (target.props.id) {
-		case "show_balance":
-    	state.screen = "balance";
-    	return true;
-		
-    case "open_transfer":
-    	state.screen = "transfer";
-    	return true;
-    
-    case "submit_transfer":
-      console.log("\nTransfer submitted:");
-      console.log(`Recipient: ${state.transferForm.recipient || "(empty)"}`);
-      console.log(`Amount: ${state.transferForm.amount || "(empty)"}`);
+// ---------------- ACTION HANDLERS ----------------
+const actionHandlers = {
+  show_balance() {
+    state.screen = 'balance';
+    return true;
+  },
 
-      state.transferForm.recipient = "";
-      state.transferForm.amount = "";
-      state.screen = "main";
-    
-      setTimeout(loop, 1200);
-      return false;
+  open_transfer() {
+    state.screen = 'transfer';
+    return true;
+  },
 
-		case "back":
-    	state.screen = "main";
-  		return true;
-		
-    default:
-			return true;
-	}
+  submit_transfer() {
+    console.log("\nTransfer submitted:");
+    console.log(`Recipient: ${state.transferForm.recipient || "(empty)"}`);
+    console.log(`Amount: ${state.transferForm.amount || "(empty)"}`);
+    state.transferForm.recipient = "";
+    state.transferForm.amount = "";
+    state.screen = "main";
+  
+    setTimeout(loop, 1200);
+    return false;
+  },
+
+  back() {
+    state.screen = "main";
+    return true;
+  },
 }
 
-function handleInputEdit(target) {
-  const {id, label} = target.props;
-
-  rl.question(`${label}: `, (value) => {
-    const trimmed = value.trim();  
-    
-    if (id in state.transferForm) {
-      state.transferForm[`${id}`] = trimmed;
-    }
+// ---------------- RUNTIME HANDLERS ----------------
+function handleAction(actionNode) {
+  const intent = actionNode.props.intent;
+  const handler = actionHandlers[intent];
   
+  if (!handler) {
+    return true;
+  }
+
+  return handler();
+}
+
+
+function handleInputEdit(inputNode) {
+  rl.question(`${inputNode.props.label}: `, (value) => {
+    setByPath(state, inputNode.props.bind, value.trim());
+    const trimmed = value.trim();  
     loop();
   });
 }
 
 
-// ---------------- LOOP ----------------
+// ---------------- RUNTIME LOOP ----------------
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
