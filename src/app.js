@@ -29,6 +29,7 @@ function actionNode(id, label, intent = null) {
 }
 
 function inputNode(id, label, bind, value = "", placeholder = "") {
+function inputNode(id, label, bind, value = "", placeholder = "") {
   return {
     type: "input",
     props: { id, label, bind, value, placeholder },
@@ -110,12 +111,14 @@ function buildTree(currentState) {
           "recipient",
           "Recipient",
           "transferForm.recipient",
+          "transferForm.recipient",
           currentState.transferForm.recipient,
           "Enter recipient name"
         ),
         inputNode(
           "amount",
           "Amount",
+          "transferForm.amount",
           "transferForm.amount",
           currentState.transferForm.amount,
           "Enter amount"
