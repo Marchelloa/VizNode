@@ -29,7 +29,6 @@ function actionNode(id, label, intent = null) {
 }
 
 function inputNode(id, label, bind, value = "", placeholder = "") {
-function inputNode(id, label, bind, value = "", placeholder = "") {
   return {
     type: "input",
     props: { id, label, bind, value, placeholder },
@@ -111,14 +110,12 @@ function buildTree(currentState) {
           "recipient",
           "Recipient",
           "transferForm.recipient",
-          "transferForm.recipient",
           currentState.transferForm.recipient,
           "Enter recipient name"
         ),
         inputNode(
           "amount",
           "Amount",
-          "transferForm.amount",
           "transferForm.amount",
           currentState.transferForm.amount,
           "Enter amount"
@@ -228,6 +225,8 @@ const actionHandlers = {
   },
 
   submit_transfer() {
+    notifyStateChanged("submit_transfer");
+
     print("\nTransfer submitted:");
     print(`Recipient: ${state.transferForm.recipient || "(empty)"}`);
     print(`Amount: ${state.transferForm.amount || "(empty)"}`);
@@ -245,8 +244,6 @@ const actionHandlers = {
     return true;
   },
 };
-
-
 
 
 // ---------------- RUNTIME HANDLERS ----------------
@@ -322,3 +319,37 @@ function loop() {
 
 // ---------------- APP START ----------------
 loop();
+
+
+// ---------------- STATE OBSERVER ----------------
+const stateListeners = [];
+
+function onStateChange(listener) {
+  stateListeners.push(listener);
+}
+
+function notifyStateChanged(reason) {
+  const snapshot = structuredClone(state);
+
+  for (const listener of stateListeners) {
+    listener(snapshot, reason);
+  }
+}
+
+// ---------------- DEMO SERVER HANDLERS ----------------
+function serverTransferHandler(data) {
+  print("\n[SERVER] Transfer handler called");
+  print(`[SERVER] Recipient: ${data.recipient}`);
+  print(`[SERVER] Amount: ${data.amount}`);
+}
+
+onStateChange((snapshot, reason) => {
+  if (reason !== "submit_transfer") {
+    return;
+  }
+
+  serverTransferHandler({
+    recipient: snapshot.transferForm.recipient,
+    amount: snapshot.transferForm.amount,
+  });
+});
