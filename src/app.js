@@ -122,6 +122,7 @@ function buildTree(currentState) {
         ),
       ]),
 
+
       menuNode("Actions", [
         actionNode("submit_transfer", "Submit"),
         actionNode("back", "Back"),
