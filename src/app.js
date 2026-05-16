@@ -216,11 +216,13 @@ function renderConsole(tree) {
 const actionHandlers = {
   show_balance() {
     state.screen = "balance";
+    notifyStateChanged("show_balance");
     return true;
   },
 
   open_transfer() {
     state.screen = "transfer";
+    notifyStateChanged("open_transfer");
     return true;
   },
 
@@ -241,6 +243,7 @@ const actionHandlers = {
 
   back() {
     state.screen = "main";
+    notifyStateChanged("back");
     return true;
   },
 };
@@ -261,6 +264,7 @@ function handleAction(actionNode) {
 function handleInputEdit(inputNode) {
   rl.question(`${inputNode.props.label}: `, (value) => {
     setByPath(state, inputNode.props.bind, value.trim());
+    notifyStateChanged("input_changed");
     loop();
   });
 }
@@ -273,7 +277,15 @@ const rl = readline.createInterface({
 });
 
 rl.on("close", () => {
-  console.log("\nBye.");
+  spacer();
+  print("=== EFFECT LOG ===");
+  spacer();
+
+  for (const message of effectLog) {
+    print(message);
+  }
+
+  print("\nBye.");
   process.exit(0);
 });
 
@@ -338,10 +350,15 @@ function notifyStateChanged(reason) {
 
 // ---------------- DEMO SERVER HANDLERS ----------------
 function serverTransferHandler(data) {
-  print("\n[SERVER] Transfer handler called");
-  print(`[SERVER] Recipient: ${data.recipient}`);
-  print(`[SERVER] Amount: ${data.amount}`);
+  logEffect("[SERVER] Transfer handler called");
+  logEffect(`[SERVER] Recipient: ${data.recipient}`);
+  logEffect(`[SERVER] Amount: ${data.amount}`);
 }
+
+onStateChange((snapshot, reason) => {
+  logEffect(`[STATE] ${reason}`);
+});
+
 
 onStateChange((snapshot, reason) => {
   if (reason !== "submit_transfer") {
@@ -353,3 +370,12 @@ onStateChange((snapshot, reason) => {
     amount: snapshot.transferForm.amount,
   });
 });
+
+
+
+// ---------------- EFFECT LOG -------------------------
+const effectLog = [];
+
+function logEffect(message) {
+  effectLog.push(message);
+}

@@ -1,238 +1,126 @@
-# VizNode — ближайший план реализации
+# VizNode — ближайший план реализации (обновлённый)
 
-## Цель ближайшего этапа
+## Текущее состояние (выполнено)
 
-Сделать минимальный законченный цикл:
+Реализовано:
 
-```txt
-action/input → state change → notify(reason) → effect handler
-```
-
-Главная задача — доказать механику наблюдения за состоянием без превращения проекта в обычное клиент-серверное приложение.
-
----
-
-## Архитектурный принцип
-
-`state` остаётся источником правды внутри консольного приложения.
-
-Серверная/внешняя часть не управляет состоянием, а реагирует на уже произошедшие события.
-
-```txt
-console app
-  ↓
-state changes
-  ↓
-notify(reason)
-  ↓
-effects / handlers
-```
+- `state` как источник правды
+- UI-узлы:
+  - textNode
+  - actionNode
+  - inputNode
+  - menuNode
+  - containerNode
+- Рекурсивный renderer
+- Разделение menu и container
+- Утилиты print() и spacer()
+- State observer:
+  - onStateChange
+  - notifyStateChanged
+- snapshot через structuredClone
+- demo server handler (serverTransferHandler)
+- связка:
+  submit_transfer → notify → handler
 
 ---
 
-## Что уже есть
+## Текущая цель
 
-- `state` приложения.
-- Фабрики UI-узлов:
-  - `textNode`
-  - `actionNode`
-  - `inputNode`
-  - `menuNode`
-  - `containerNode`
-- `buildTree(state)`.
-- Рекурсивный console renderer.
-- `actionMap` для выбора пунктов.
-- Обработка `action` и `input`.
-- Разделение `menu` и `container`.
-- Утилиты `print()` и `spacer()`.
+Расширить систему событий:
+
+action/input → state change → notify(reason) → effects
 
 ---
 
-## Milestone 1 — State Observer
+## Milestone — Расширение событий
 
-Добавить механизм подписки на изменения состояния.
+Добавить notifyStateChanged(reason) для всех значимых действий:
 
-```js
-const stateChangeListeners = [];
+События:
 
-function onStateChange(listener) {
-  stateChangeListeners.push(listener);
-}
-
-function notifyStateChanged(reason) {
-  const snapshot = structuredClone(state);
-
-  for (const listener of stateChangeListeners) {
-    listener(snapshot, reason);
-  }
-}
-```
-
-### Важно
-
-`notifyStateChanged()` не должен менять `state`.
-Он только сообщает внешним обработчикам, что что-то уже произошло.
+- open_transfer
+- show_balance
+- back
+- input_changed
+- submit_transfer (уже есть)
 
 ---
 
-## Milestone 2 — Вызовы notify после важных изменений
+## Где вызывать notify
 
-Добавить `notifyStateChanged(reason)` в места, где реально меняется состояние.
+Переходы экранов:
 
-### Примеры событий
-
-```txt
-open_transfer
-show_balance
-back
-input_changed
-submit_transfer
-```
-
-### Где вызывать
-
-После перехода экрана:
-
-```js
 open_transfer() {
   state.screen = "transfer";
   notifyStateChanged("open_transfer");
   return true;
 }
-```
 
-После редактирования input:
+Изменение input:
 
-```js
-setByPath(state, inputNode.props.bind, value.trim());
+setByPath(state, bind, value);
 notifyStateChanged("input_changed");
-```
 
-Перед очисткой формы при submit:
+submit_transfer (ВАЖНО — ДО очистки):
 
-```js
 submit_transfer() {
   notifyStateChanged("submit_transfer");
 
   state.transferForm.recipient = "";
   state.transferForm.amount = "";
   state.screen = "main";
-
-  setTimeout(loop, 1200);
-  return false;
 }
-```
 
 ---
 
-## Milestone 3 — Демо server/effect handler
+## Добавить простой логгер
 
-Пока не делать настоящий HTTP-сервер.
-Сначала добавить локальную имитацию серверного обработчика.
-
-```js
-function serverTransferHandler(data) {
-  print("\n[SERVER] Transfer handler called");
-  print(`[SERVER] Recipient: ${data.recipient}`);
-  print(`[SERVER] Amount: ${data.amount}`);
-}
-```
-
-Подписка:
-
-```js
 onStateChange((snapshot, reason) => {
-  if (reason !== "submit_transfer") {
-    return;
-  }
-
-  serverTransferHandler({
-    recipient: snapshot.transferForm.recipient,
-    amount: snapshot.transferForm.amount,
-  });
+  print(`[STATE] ${reason}`);
 });
-```
 
 ---
 
-## Milestone 4 — Разделить события и побочные эффекты
+## Архитектурное правило
 
-Событие отвечает на вопрос:
-
-```txt
-что произошло?
-```
-
-Effect handler отвечает на вопрос:
-
-```txt
-что с этим делать снаружи?
-```
-
-Пример:
-
-```txt
-event: submit_transfer
-data: recipient, amount
-effect: call server transfer handler
-```
+state — источник правды  
+observer — наблюдает  
+effects — реагируют  
 
 ---
 
-## Что НЕ делать пока
+## Что НЕ делать
 
-Пока не нужно:
+Пока не добавлять:
 
-- делать полноценный HTTP API;
-- делать WebSocket;
-- подключать настоящую базу данных;
-- переписывать `state` в immutable/redux-style;
-- переносить владение состоянием на сервер;
-- превращать проект в обычное веб-приложение.
-
----
-
-## После первого рабочего цикла
-
-Когда заработает:
-
-```txt
-submit_transfer → notifyStateChanged → serverTransferHandler
-```
-
-можно будет выбрать следующий шаг:
-
-1. Подключить запись в JSON-файл.
-2. Подключить настоящий HTTP endpoint.
-3. Подключить HTML snapshot renderer.
-4. Подключить WebSocket для live-визуализации.
+- HTTP сервер
+- WebSocket
+- БД
+- immutable state
+- перенос логики на сервер
 
 ---
 
-## Критерий готовности ближайшего этапа
+## Следующий этап
 
-Этап считается готовым, если:
+После покрытия событий:
 
-- пользователь заполняет transfer form;
-- нажимает Submit;
-- `state` ещё содержит данные формы в момент события;
-- вызывается `notifyStateChanged("submit_transfer")`;
-- срабатывает `serverTransferHandler`;
-- данные transfer корректно выводятся в консоль;
-- после этого форма очищается и экран возвращается на main.
+1. JSON persistence
+2. HTML snapshot renderer
+3. WebSocket (опционально)
 
 ---
 
-## Ключевая формула VizNode
+## Критерий завершения
 
-```txt
-state is not controlled by the server;
-state is observed by effects.
-```
+- Все действия вызывают notify
+- reason корректно передаётся
+- observer реагирует
+- state остаётся главным источником
 
-Русский вариант:
+---
 
-```txt
-сервер не управляет состоянием;
-сервер реагирует на состояние и события.
-```
+## Ключевая формула
+
+state is not controlled;  
+state is observed.
