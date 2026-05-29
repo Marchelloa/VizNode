@@ -1,5 +1,8 @@
 // ---------------- IMPORTS ----------------
 import readline from "readline";
+import { createServer } from "./server.js";
+
+
 
 import {
   buildTree,
@@ -13,7 +16,9 @@ import {
 
 import {
   onStateChange,
+  onAppEvent,
   notifyStateChanged,
+  notifyAppEvent,
 } from "./observer.js";
 
 import {
@@ -26,9 +31,12 @@ import {
   setByPath,
 } from "./state.js";
 
-registerEffects(onStateChange);
 
 
+registerEffects({
+  onStateChange,
+  onAppEvent,
+});
 
 // ---------------- ACTION HANDLERS ----------------
 const actionHandlers = {
@@ -37,25 +45,20 @@ const actionHandlers = {
     notifyStateChanged(state, "show_balance");
     return true;
   },
-
+  
   open_transfer() {
     state.screen = "transfer";
     notifyStateChanged(state, "open_transfer");
     return true;
   },
-
+  
   submit_transfer() {
-    notifyStateChanged(state, "submit_transfer");
+    notifyAppEvent("submit_transfer", {
+      recipient: state.transferForm.recipient,
+      amount: state.transferForm.amount,
+    });
 
-    print("\nTransfer submitted:");
-    print(`Recipient: ${state.transferForm.recipient || "(empty)"}`);
-    print(`Amount: ${state.transferForm.amount || "(empty)"}`);
-
-    state.transferForm.recipient = "";
-    state.transferForm.amount = "";
-    state.screen = "main";
-
-    setTimeout(loop, 1200);
+    submitTransferFlow();
     return false;
   },
 
@@ -66,6 +69,68 @@ const actionHandlers = {
   },
 };
 
+
+const server = createServer();
+
+// ---------------- NOTIFY ----------------
+function notify(reason) {
+  notifyAppEvent("notify", { message: reason });
+}
+
+// ---------------- LOCAL VALIDATION ----------------
+function validateTransferForm(form) {
+  if (!form.recipient.trim()) {
+    return { ok: false, reason: "Recipient is required" };
+  }
+
+  if (!form.amount.trim()) {
+    return { ok: false, reason: "Amount is required" };
+  }
+  
+  const amount = Number(form.amount);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, reason: "Amount must be a positive number" };
+  }
+
+  return { ok: true };
+}
+
+
+async function submitTransferFlow() {
+  const form = {
+    recipient: state.transferForm.recipient,
+    amount: state.transferForm.amount,
+  };
+
+  const validation = validateTransferForm(form);
+  if (!validation.ok) {
+    notify(validation.reason);
+    setTimeout(loop, 1200);
+    return false;
+  }
+
+  const response = await server.executeTransfer({
+    recipient: form.recipient,
+    amount: Number(form.amount),
+  });
+
+  if (!response.ok) {
+    notify(response.reason);
+    setTimeout(loop, 1200);
+    return false;
+  }
+
+  state.balance = response.data.balance;
+  state.transferForm.recipient = "";
+  state.transferForm.amount = "";
+  state.screen = "main";
+  notifyStateChanged(state, "transfer_applied");
+
+  notify("Transfer completed");
+  setTimeout(loop, 1200);
+  return false;
+}
 
 // ---------------- RUNTIME HANDLERS ----------------
 function handleAction(actionNode) {

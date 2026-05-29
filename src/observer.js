@@ -1,8 +1,13 @@
 // ---------------- STATE OBSERVER ----------------
 const stateListeners = [];
+const appEventListeners = [];
 
 function onStateChange(listener) {
   stateListeners.push(listener);
+}
+
+function onAppEvent(listener) {
+  appEventListeners.push(listener);
 }
 
 
@@ -12,10 +17,20 @@ function notifyStateChanged(state, reason) {
   for (const listener of stateListeners) {
     listener(snapshot, reason);
   }
-}   
+}
+
+function notifyAppEvent(eventName, payload = {}) {
+  const snapshot = structuredClone(payload);
+
+  for (const listener of appEventListeners) {
+    listener(eventName, snapshot);
+  }
+}
 
 
 export {
-    onStateChange,
-    notifyStateChanged,
+  onStateChange,
+  onAppEvent,
+  notifyStateChanged,
+  notifyAppEvent,
 }

@@ -12,19 +12,28 @@ function serverTransferHandler(data) {
   logEffect(`[SERVER] Amount: ${data.amount}`);
 }
 
-function registerEffects(onStateChange) {
+function registerEffects({ onStateChange, onAppEvent }) {
   onStateChange((snapshot, reason) => {
     logEffect(`[STATE] ${reason}`);
   });
 
-  onStateChange((snapshot, reason) => {
-    if (reason !== "submit_transfer") {
+  onAppEvent((eventName, payload) => {
+    if (eventName === "notify") {
+      logEffect(`[NOTICE] ${payload.message}`);
+      return;
+    }
+
+    logEffect(`[EVENT] ${eventName}`);
+  });
+
+  onAppEvent((eventName, payload) => {
+    if (eventName !== "submit_transfer") {
       return;
     }
 
     serverTransferHandler({
-      recipient: snapshot.transferForm.recipient,
-      amount: snapshot.transferForm.amount,
+      recipient: payload.recipient,
+      amount: payload.amount,
     });
   });
 }
