@@ -4,9 +4,12 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug VizNode",
+      "name": "Run VizNode CLI",
       "program": "${workspaceFolder}/src/app.js",
+      "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "restart": false,
       "skipFiles": ["<node_internals>/**"]
     }
   ]

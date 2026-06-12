@@ -2,17 +2,9 @@
 import readline from "readline";
 import { createServer } from "./server.js";
 
+import { buildTree } from "./tree.js";
 
-
-import {
-  buildTree,
-} from "./tree.js";
-
-import {
-  renderConsole,
-  print,
-  spacer,
-} from "./renderer.js";
+import { renderConsole, print, spacer } from "./renderer.js";
 
 import {
   onStateChange,
@@ -21,16 +13,9 @@ import {
   notifyAppEvent,
 } from "./observer.js";
 
-import {
-  effectLog,
-  registerEffects,
-} from "./effects.js"
+import { effectLog, registerEffects } from "./effects.js"
 
-import {
-  state,
-  setByPath,
-} from "./state.js";
-
+import { state, setByPath } from "./state.js";
 
 
 registerEffects({
@@ -159,7 +144,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.on("close", () => {
+function handleClose() {
   spacer();
   print("=== EFFECT LOG ===");
   spacer();
@@ -170,7 +155,9 @@ rl.on("close", () => {
 
   print("\nBye.");
   process.exit(0);
-});
+}
+
+rl.on("close", handleClose);
 
 
 // ---------------- MAIN LOOP ----------------

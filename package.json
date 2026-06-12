@@ -2,13 +2,14 @@
   "name": "viznode",
   "version": "1.0.0",
   "description": "**Author:** Mark Kozynda, Russia, February 2026",
-  "main": "src/main.js",
+  "main": "src/app.js",
   "type": "module",
   "directories": {
     "doc": "docs",
     "example": "examples"
   },
   "scripts": {
+    "start": "node src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

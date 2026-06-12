@@ -40,6 +40,5 @@ function registerEffects({ onStateChange, onAppEvent }) {
 
 export {
     effectLog,
-    logEffect,
     registerEffects,
 }
