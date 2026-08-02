@@ -2,7 +2,7 @@
 
 ## Статус документа
 
-Этот документ описывает предлагаемую текущую задачу прототипа. Концепция ещё не является реализованной частью архитектуры.
+Этот документ описывает текущую задачу прототипа. Общая база событий и обработчиков уже реализована, а DOM renderer, валидатор дерева и AI provider пока остаются следующими этапами.
 
 ## Цель
 
@@ -27,7 +27,7 @@ state → AI-интерфейс → DOM → intent → handler → новый st
 
 ## Текущее состояние прототипа
 
-Сейчас интерфейс строится по цепочке:
+Сейчас консольный интерфейс строится по цепочке:
 
 ```text
 state
@@ -38,13 +38,19 @@ buildTree(state)
   ↓
 renderConsole(tree)
   ↓
-консольное представление
+консольное представление и выбор пользователя
+  ↓
+унифицированное action/input-событие
+  ↓
+application.dispatch(event)
 ```
 
 Выбранная пользователем action-нода обрабатывается так:
 
 ```text
-actionNode.props.intent
+{ type: "action", intent }
+  ↓
+application.dispatch(event)
   ↓
 actionHandlers[intent]
   ↓
@@ -53,10 +59,19 @@ actionHandlers[intent]
 изменение state
 ```
 
-Центральная точка диспетчеризации уже существует:
+Центральная точка диспетчеризации находится в `src/application.js`:
 
 ```js
-const handler = actionHandlers[intent];
+const handled = await application.dispatch({
+  type: "action",
+  intent,
+});
+```
+
+Внутри приложения используется единственный доверенный реестр:
+
+```js
+const handler = actionHandlers[event.intent];
 
 if (handler) {
   await handler();
@@ -70,7 +85,7 @@ if (handler) {
 Его условный публичный API:
 
 ```js
-const interfaceElement = await interfaceBuilder.buildInterface(state);
+const tree = await interfaceBuilder.buildTree(state);
 ```
 
 Конкретное имя класса на этом этапе не принципиально:
@@ -85,14 +100,14 @@ const interfaceBuilder = new AI(...);
 const interfaceBuilder = new AIInterfaceBuilder(...);
 ```
 
-Важны ответственность объекта и контракт метода `buildInterface(state)`.
+Важны ответственность объекта и контракт метода `buildTree(state)`.
 
 ## Полный цикл работы
 
 ```text
 текущий state
   ↓
-buildInterface(state)
+buildTree(state)
   ↓
 ИИ создаёт декларативное описание интерфейса
   ↓
@@ -126,13 +141,17 @@ actionHandlers[intent]
 ```js
 const tree = await model.generateInterface({
   state,
-  allowedIntents: Object.keys(actionHandlers),
+  allowedIntents: Object.keys(application.actionHandlers),
+  allowedBindings: [
+    "transferForm.recipient",
+    "transferForm.amount",
+  ],
   allowedNodeTypes: [
-    "screen",
     "text",
     "input",
     "action",
-    "status",
+    "menu",
+    "container",
   ],
 });
 ```
@@ -141,37 +160,42 @@ const tree = await model.generateInterface({
 
 ## Результат работы ИИ
 
-ИИ возвращает не исполняемый JavaScript и не произвольный HTML, а декларативное описание интерфейса:
+ИИ возвращает не исполняемый JavaScript и не произвольный HTML, а декларативное описание интерфейса в существующем формате. Корнем остаётся массив нод:
 
 ```js
-{
-  type: "screen",
-
-  children: [
-    {
-      type: "text",
-      props: {
-        text: "Подтверждение перевода",
-      },
+[
+  {
+    type: "text",
+    props: {
+      text: "Подтверждение перевода",
     },
+  },
 
-    {
-      type: "action",
-      props: {
-        label: "Подтвердить",
-        intent: "submit_transfer",
-      },
+  {
+    type: "menu",
+    props: {
+      title: "Действия",
+      items: [
+        {
+          type: "action",
+          props: {
+            id: "submit_transfer",
+            label: "Подтвердить",
+            intent: "submit_transfer",
+          },
+        },
+        {
+          type: "action",
+          props: {
+            id: "back",
+            label: "Назад",
+            intent: "back",
+          },
+        },
+      ],
     },
-
-    {
-      type: "action",
-      props: {
-        label: "Назад",
-        intent: "back",
-      },
-    },
-  ],
-}
+  },
+]
 ```
 
 Это описание является промежуточным представлением между моделью и DOM.
@@ -203,22 +227,16 @@ function renderAction(node) {
 
 ## Обработка действий пользователя
 
-При выборе DOM-элемента приложение получает связанный с ним `intent`:
+При выборе DOM-элемента renderer должен сформировать такое же событие, какое уже создаёт console adapter:
 
 ```js
-async function handleAction(intent) {
-  const handler = actionHandlers[intent];
-
-  if (!handler) {
-    console.warn(`Unknown action intent: ${intent}`);
-    return;
-  }
-
-  await handler();
-}
+await application.dispatch({
+  type: "action",
+  intent: element.dataset.intent,
+});
 ```
 
-`actionHandlers` остаётся на текущем уровне приложения:
+`actionHandlers` уже вынесен из console entry point в общее прикладное ядро `application.js`:
 
 ```js
 const actionHandlers = {
@@ -231,8 +249,7 @@ const actionHandlers = {
   },
 
   submit_transfer() {
-    submitTransferFlow();
-    return false;
+    void submitTransferFlow();
   },
 
   back() {
@@ -241,7 +258,11 @@ const actionHandlers = {
 };
 ```
 
-На этом этапе не требуется переносить `actionHandlers` или менять существующую прикладную логику.
+Console и будущий DOM не должны создавать собственные копии этого реестра. Разрешённые AI-намерения можно получать из общей базы:
+
+```js
+Object.keys(application.actionHandlers);
+```
 
 ## Граница ответственности
 
@@ -273,7 +294,7 @@ const actionHandlers = {
 function validateActionNode(node) {
   const intent = node.props?.intent;
 
-  if (!Object.hasOwn(actionHandlers, intent)) {
+  if (!Object.hasOwn(application.actionHandlers, intent)) {
     throw new Error(`Unknown action intent: ${intent}`);
   }
 }
@@ -299,23 +320,29 @@ function validateActionNode(node) {
 
 ## Объём первой реализации
 
-Для первой версии достаточно:
+Уже выполнено:
 
 1. Сохранить существующий `state`.
-2. Сохранить существующий `actionHandlers`.
-3. Добавить объект с методом `buildInterface(state)`.
-4. Получать от ИИ декларативное дерево интерфейса.
-5. Проверять типы нод и значения `intent`.
-6. Преобразовывать проверенное дерево в DOM.
-7. Получать `intent` при выборе action-элемента.
-8. Вызывать существующий `actionHandlers[intent]`.
-9. После изменения `state` повторно строить интерфейс.
+2. Создать единый `actionHandlers` в renderer-independent ядре.
+3. Ввести `application.dispatch(event)`.
+4. Нормализовать console action/input в общие события.
+5. Отделить console entry point от прикладной логики.
+6. Ввести renderer-neutral callback `requestRender()`.
+
+Следующая часть первой версии:
+
+1. Добавить объект с методом `buildTree(state)`.
+2. Сначала подключить статический provider на основе текущего `buildTree`.
+3. Проверять типы нод, значения `intent` и пути `bind`.
+4. Преобразовывать проверенное дерево в DOM.
+5. Передавать DOM action/input в существующий `application.dispatch(event)`.
+6. После изменения `state` повторно строить активное представление.
+7. Добавить AI provider, возвращающий тот же формат дерева.
 
 ## Что пока не входит в задачу
 
 На текущем этапе не требуется:
 
-- переносить `actionHandlers` в отдельный модуль;
 - менять существующую прикладную логику;
 - переписывать `submitTransferFlow()`;
 - делать обработчики универсальными;

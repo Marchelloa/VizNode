@@ -4,18 +4,17 @@
 
 ## Vision
 
-VizNode is a console-first interface experiment built around a simple idea:
+VizNode is an interface experiment built around a simple idea:
 modern platforms often bury straightforward user intent under noise, hooks, promotions, and unnecessary navigation.
 
 VizNode takes the opposite approach:
 
-- the console shows only what is needed for the current task
+- every renderer shows only what is needed for the current task
 - interaction stays focused and minimal
-- visual HTML is generated only on demand
-- HTML is not a second live application, but a snapshot of the current UI node for inspection
+- application behavior is independent from its console or DOM representation
+- console and DOM use the same state, node tree, events, and trusted action handlers
 
-The goal is not to replace the console with the web.
-The goal is to keep the console as the primary runtime interface and use HTML only when visual context is actually useful.
+The console is the currently implemented interface. A live DOM renderer is planned as an alternative presentation of the same application rather than a separate application with duplicated behavior.
 
 ## Concept
 
@@ -24,30 +23,32 @@ VizNode explores a model where:
 - application state remains explicit and inspectable
 - the interface is described as a node tree
 - the same node tree can be rendered in different ways
-- the default experience stays text-first and low-noise
+- renderers produce the same normalized action and input events
 
 In practice, this means a user can:
 
-- navigate and act through a clean console flow
+- navigate and act through a clean console or DOM flow
 - avoid the clutter of full platform interfaces
-- request a visual snapshot only for the exact item or screen they want to inspect
+- switch presentation without changing application handlers or backend behavior
 
 ## Current Direction
 
-The project is evolving toward this structure:
+The current application foundation follows this structure:
 
-- `state -> node tree -> renderer`
-- console renderer for the main interaction flow
-- optional HTML snapshot renderer for visual inspection
+- `state -> node tree -> renderer -> normalized event -> application -> state`
+- `application.js` contains shared application behavior and action handlers
+- `app.js` adapts console input to normalized application events
+- a DOM renderer can be added against the same tree and application contract
+- an AI provider can later build the same declarative tree
 
-This keeps one source of truth while allowing multiple views of the same interface state.
+This keeps one source of truth and one behavior layer while allowing multiple presentations of the same interface state.
 
 ## Goals
 
 - reduce interface noise around simple tasks
 - preserve focus on user intent
 - separate application logic from presentation
-- support console-first interaction with optional visual output
+- support interchangeable console and DOM presentations on one application core
 - explore minimal, inspectable UI architecture
 
 ## Project Structure
@@ -69,18 +70,17 @@ It is trying to build a quieter one.
 
 ### Видение
 
-VizNode — это эксперимент с console-first интерфейсом, построенный вокруг простой идеи:
+VizNode — это эксперимент с интерфейсом, построенный вокруг простой идеи:
 современные платформы слишком часто прячут простое пользовательское намерение под шумом, крючками, промо-блоками и лишней навигацией.
 
 VizNode предлагает обратный подход:
 
-- консоль показывает только то, что нужно для текущей задачи
+- каждый renderer показывает только то, что нужно для текущей задачи
 - взаимодействие остаётся сфокусированным и минималистичным
-- визуальный HTML создаётся только по запросу
-- HTML не является вторым живым приложением, а служит снимком текущей UI-ноды для просмотра
+- поведение приложения не зависит от консольного или DOM-представления
+- консоль и DOM используют общий state, дерево нод, события и доверенные обработчики
 
-Цель не в том, чтобы заменить консоль вебом.
-Цель в том, чтобы сохранить консоль как основной рабочий интерфейс, а HTML использовать только тогда, когда визуальный контекст действительно полезен.
+Консоль остаётся текущим реализованным интерфейсом. Живой DOM renderer планируется как альтернативное представление того же приложения, а не как отдельное приложение с продублированной логикой.
 
 ### Концепция
 
@@ -89,30 +89,32 @@ VizNode исследует модель, в которой:
 - состояние приложения остаётся явным и наблюдаемым
 - интерфейс описывается как дерево нод
 - одно и то же дерево нод может рендериться разными способами
-- базовый пользовательский опыт остаётся текстовым и малошумным
+- разные renderer формируют одинаковые нормализованные события action и input
 
 На практике это означает, что пользователь может:
 
-- перемещаться и выполнять действия через чистый консольный поток
+- перемещаться и выполнять действия через чистый консольный или DOM-поток
 - избегать перегруженных платформенных интерфейсов
-- по запросу получать визуальный снимок только того экрана или объекта, который действительно нужен
+- менять представление без изменения обработчиков приложения и backend-поведения
 
 ### Текущее Направление
 
-Проект развивается в сторону такой структуры:
+Текущая основа приложения следует структуре:
 
-- `state -> node tree -> renderer`
-- консольный renderer для основного потока взаимодействия
-- опциональный HTML snapshot renderer для визуального просмотра
+- `state -> node tree -> renderer -> normalized event -> application -> state`
+- `application.js` содержит общую прикладную логику и обработчики действий
+- `app.js` преобразует консольный ввод в унифицированные события приложения
+- DOM renderer сможет работать с тем же деревом и контрактом приложения
+- AI provider позднее сможет строить то же декларативное дерево
 
-Это позволяет сохранить один источник истины и при этом поддерживать несколько представлений одного и того же состояния интерфейса.
+Это позволяет сохранить единый источник истины и единый слой поведения при нескольких представлениях одного состояния интерфейса.
 
 ### Цели
 
 - уменьшить интерфейсный шум вокруг простых задач
 - сохранить фокус на намерении пользователя
 - отделить логику приложения от представления
-- поддерживать console-first взаимодействие с опциональной визуализацией
+- поддерживать взаимозаменяемые console и DOM-представления на общем ядре
 - исследовать минималистичную и наблюдаемую архитектуру UI
 
 ### Ключевая Ценность
