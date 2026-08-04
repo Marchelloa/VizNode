@@ -38,7 +38,7 @@ state
 requestRender()
 ```
 
-Сейчас в качестве renderer используется консоль. DOM renderer и AI-построитель дерева ещё не реализованы.
+Сейчас к приложению подключён console renderer. DOM renderer уже умеет преобразовывать все текущие типы UI-нод в статическое DOM-дерево, но DOM-события и browser entry point ещё не подключены. AI-построитель дерева также пока не реализован.
 
 ## Кто За Что Отвечает
 
@@ -114,11 +114,22 @@ application.dispatch(event);
 
 Корень дерева сейчас является массивом нод.
 
-### `src/renderer.js`
+### `src/console-renderer.js`
 
 Рендерит общее дерево в консоль и возвращает `actionMap`, связывающий номер пункта с action/input-нодой.
 
 Renderer не изменяет `state` и не выполняет `actionHandlers`.
+
+### `src/dom-renderer.js`
+
+Преобразует общее UI-дерево в DOM:
+
+- поддерживает `text`, `action`, `input`, `menu` и `container`;
+- рекурсивно строит составные ноды;
+- сохраняет `intent` и `bind` в `data-*` атрибутах;
+- устанавливает текст через `textContent`;
+- полностью заменяет содержимое переданного `root`;
+- пока не создаёт нормализованные события и не вызывает `application.dispatch(event)`.
 
 ### `src/server.js`
 
@@ -171,7 +182,7 @@ Input передаётся в том же стиле:
 }
 ```
 
-Будущий DOM renderer должен формировать события с тем же контрактом.
+Следующий этап DOM renderer должен формировать события с тем же контрактом.
 
 ## Основной Flow Перевода
 
@@ -208,13 +219,15 @@ const application = createApplication({
 - action/input представлены унифицированными событиями;
 - console adapter работает через общий dispatch;
 - `requestRender` не зависит от конкретного renderer;
-- текущий формат UI-дерева сохранён.
+- текущий формат UI-дерева сохранён;
+- console renderer выделен в `src/console-renderer.js`;
+- DOM renderer строит статическое представление всех текущих типов нод.
 
 ## Что Ещё Не Реализовано
 
 - строгий валидатор UI-дерева;
 - `InterfaceBuilder` и заменяемые providers;
-- DOM renderer и browser entry point;
+- DOM action/input events и browser entry point;
 - AI provider;
 - allowlist для `intent` и `bind` на границе AI;
 - безопасный fallback на статическое дерево;
@@ -226,7 +239,7 @@ const application = createApplication({
 2. Добавить тесты `application.dispatch(event)`.
 3. Зафиксировать и валидировать текущую схему UI-дерева.
 4. Добавить `InterfaceBuilder` со статическим provider на основе `buildTree`.
-5. Реализовать DOM renderer и browser entry point.
+5. Подключить DOM events и browser entry point к готовому DOM renderer.
 6. Подключить AI provider к тому же контракту дерева.
 
 ## Быстрый Возврат В Контекст
@@ -240,7 +253,8 @@ const application = createApplication({
 5. `src/state.js`;
 6. `src/tree.js`;
 7. `src/nodes.js`;
-8. `src/renderer.js`;
-9. `src/server.js`;
-10. `src/observer.js`;
-11. `src/effects.js`.
+8. `src/console-renderer.js`;
+9. `src/dom-renderer.js`;
+10. `src/server.js`;
+11. `src/observer.js`;
+12. `src/effects.js`.

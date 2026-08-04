@@ -20,7 +20,7 @@ state
 requestRender()
 ```
 
-Консоль остаётся единственным реализованным представлением, но прикладная логика больше не зависит от `readline` и console renderer.
+Консоль остаётся единственным подключённым представлением. DOM renderer уже строит статическое представление общего дерева, но пока не подключён к browser entry point и `application.dispatch(event)`. Прикладная логика не зависит от `readline`, console renderer или DOM API.
 
 ## Текущие Модули
 
@@ -63,7 +63,7 @@ Renderer-independent application core:
 - `menu`;
 - `container`.
 
-### `src/renderer.js`
+### `src/console-renderer.js`
 
 Консольный renderer:
 
@@ -71,6 +71,16 @@ Renderer-independent application core:
 - рекурсивно обходит составные ноды;
 - формирует `actionMap` для console adapter;
 - не вызывает прикладные обработчики.
+
+### `src/dom-renderer.js`
+
+DOM renderer:
+
+- преобразует `text`, `action`, `input`, `menu` и `container` в DOM;
+- рекурсивно обходит составные ноды;
+- сохраняет `intent` и `bind` в `data-*` атрибутах;
+- использует `textContent` для текстовых значений;
+- пока не формирует события и не вызывает прикладные обработчики.
 
 ### `src/state.js`
 
@@ -95,7 +105,8 @@ Renderer-independent application core:
 `application.js` не импортирует:
 
 - `readline`;
-- `renderer.js`;
+- `console-renderer.js`;
+- `dom-renderer.js`;
 - DOM API;
 - browser entry point.
 
@@ -154,7 +165,7 @@ Object.keys(application.actionHandlers);
 }
 ```
 
-DOM renderer должен использовать тот же контракт.
+При подключении событий DOM renderer должен использовать тот же контракт.
 
 ## Текущий Application API
 
@@ -231,7 +242,7 @@ application.dispatch(event);
 2. покрыть `application.dispatch(event)` тестами;
 3. зафиксировать validator текущего дерева;
 4. добавить `InterfaceBuilder` со статическим provider;
-5. подключить DOM renderer;
+5. подключить события и browser entry point к DOM renderer;
 6. подключить AI provider к тому же дереву и allowlist.
 
 ## Рабочее Правило

@@ -14,7 +14,7 @@ VizNode takes the opposite approach:
 - application behavior is independent from its console or DOM representation
 - console and DOM use the same state, node tree, events, and trusted action handlers
 
-The console is the currently implemented interface. A live DOM renderer is planned as an alternative presentation of the same application rather than a separate application with duplicated behavior.
+The console is the currently connected interface. A DOM renderer now builds a static DOM representation from the same node tree; browser event dispatch and the browser entry point are the next integration steps.
 
 ## Concept
 
@@ -38,7 +38,9 @@ The current application foundation follows this structure:
 - `state -> node tree -> renderer -> normalized event -> application -> state`
 - `application.js` contains shared application behavior and action handlers
 - `app.js` adapts console input to normalized application events
-- a DOM renderer can be added against the same tree and application contract
+- `console-renderer.js` renders the tree for the current console entry point
+- `dom-renderer.js` renders all current node types into a static DOM tree
+- DOM events and a browser entry point can be added against the existing application contract
 - an AI provider can later build the same declarative tree
 
 This keeps one source of truth and one behavior layer while allowing multiple presentations of the same interface state.
@@ -80,7 +82,7 @@ VizNode предлагает обратный подход:
 - поведение приложения не зависит от консольного или DOM-представления
 - консоль и DOM используют общий state, дерево нод, события и доверенные обработчики
 
-Консоль остаётся текущим реализованным интерфейсом. Живой DOM renderer планируется как альтернативное представление того же приложения, а не как отдельное приложение с продублированной логикой.
+Консоль остаётся текущим подключённым интерфейсом. DOM renderer уже строит статическое DOM-представление из того же дерева нод; следующими шагами остаются DOM-события и browser entry point.
 
 ### Концепция
 
@@ -104,7 +106,9 @@ VizNode исследует модель, в которой:
 - `state -> node tree -> renderer -> normalized event -> application -> state`
 - `application.js` содержит общую прикладную логику и обработчики действий
 - `app.js` преобразует консольный ввод в унифицированные события приложения
-- DOM renderer сможет работать с тем же деревом и контрактом приложения
+- `console-renderer.js` отображает дерево для текущей консольной точки входа
+- `dom-renderer.js` преобразует все текущие типы нод в статическое DOM-дерево
+- DOM-события и browser entry point смогут использовать существующий контракт приложения
 - AI provider позднее сможет строить то же декларативное дерево
 
 Это позволяет сохранить единый источник истины и единый слой поведения при нескольких представлениях одного состояния интерфейса.
