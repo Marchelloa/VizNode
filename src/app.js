@@ -3,7 +3,7 @@ import readline from "readline";
 
 import { createApplication } from "./application.js";
 import { buildTree } from "./tree.js";
-import { renderConsole, print, spacer } from "./renderer.js";
+import { renderConsole, print, spacer } from "./console-renderer.js";
 
 import { onStateChange, onAppEvent } from "./observer.js";
 
