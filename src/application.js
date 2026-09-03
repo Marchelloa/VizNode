@@ -3,10 +3,11 @@ import { notifyAppEvent, notifyStateChanged } from "./observer.js";
 import { state, setByPath } from "./state.js";
 
 /**
- * Создаёт общее прикладное ядро, независимое от способа отображения.
+ * Создаёт прикладное ядро, независимое от способа отображения.
  *
  * @param {object} options
- * @param {Function} options.requestRender — запрос повторного отображения state.
+ * @param {Function} options.requestRender — запрашивает повторное построение
+ * представления из актуального состояния.
  * @returns {{
  *   state: object,
  *   actionHandlers: Object<string, Function>,

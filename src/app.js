@@ -29,6 +29,19 @@ const application = createApplication({
 });
 
 
+// ---------------- SHARED TREE ----------------
+/**
+ * Строит UI-дерево из актуального состояния приложения.
+ *
+ * Функция является общей точкой получения текущего представления
+ * для подключённых renderer.
+ *
+ * @returns {Array<object>} актуальные корневые UI-ноды.
+ */
+function getCurrentTree() {
+  return buildTree(application.state);
+}
+
 // ---------------- CONSOLE EVENT ADAPTERS ----------------
 /**
  * Запрашивает значение input-ноды и отправляет приложению
@@ -102,7 +115,7 @@ rl.on("close", handleClose);
  * @returns {void}
  */
 function loop() {
-  const tree = buildTree(application.state);
+  const tree = getCurrentTree();
   const actionMap = renderConsole(tree);
 
   if (application.state.status.phase === "sending") {
