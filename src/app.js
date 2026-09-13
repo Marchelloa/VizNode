@@ -4,6 +4,7 @@ import readline from "readline";
 import { createApplication } from "./application.js";
 import { buildTree } from "./tree.js";
 import { renderConsole, print, spacer } from "./console-renderer.js";
+import { startBrowserBridge } from "./browser-bridge.js";
 
 import { onStateChange, onAppEvent } from "./observer.js";
 
@@ -41,6 +42,10 @@ const application = createApplication({
 function getCurrentTree() {
   return buildTree(application.state);
 }
+
+// ---------------- BROWSER BRIDGE ----------------
+const browserBridge = startBrowserBridge({ getCurrentTree });
+
 
 // ---------------- CONSOLE EVENT ADAPTERS ----------------
 /**
@@ -117,6 +122,7 @@ rl.on("close", handleClose);
 function loop() {
   const tree = getCurrentTree();
   const actionMap = renderConsole(tree);
+  browserBridge.publishTree(tree);
 
   if (application.state.status.phase === "sending") {
     return;

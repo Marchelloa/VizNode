@@ -3,6 +3,17 @@ import http from "node:http";
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3000;
 
+/**
+ * Отправляет UI-дерево одному SSE-клиенту.
+ *
+ * @param {import("node:http").ServerResponse} response
+ * @param {Array<object>} tree
+ * @returns {void}
+ */
+function sendTree(response, tree) {
+    response.write(`data: ${JSON.stringify(tree)}\n\n`)
+}
+
 
 /**
  * Запускает локальный HTTP-мост для browser renderer.
@@ -14,7 +25,10 @@ const DEFAULT_PORT = 3000;
  * @param {Function} options.getCurrentTree — возвращает актуальное UI-дерево.
  * @param {string} [options.host] — адрес локального интерфейса.
  * @param {number} [options.port] — порт HTTP-сервера.
- * @returns {import("node:http").Server} запущенный HTTP-сервер.
+ * @returns {{
+ *   server: import("node:http").Server,
+ *   publishTree: (tree: Array<object>) => void
+ * }} HTTP-сервер и функция публикации дерева.
  */
 export function startBrowserBridge({
     getCurrentTree,
@@ -25,27 +39,54 @@ export function startBrowserBridge({
         throw new TypeError("getCurrentTree must be a function");
     }
 
+    const clients = new Set();
+
     const server = http.createServer((request, response) => {
-        if (request.method !== "GET" || request.url !== "/api/tree") {
-            response.writeHead(404, {
-                "Content-Type": "application/json; charset=utf-8",
+        if (request.method === "GET" && request.url === "/api/events") {
+            response.writeHead(200, {
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Cache-Control": "no-cache",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Origin": "*",
             });
-            response.end(JSON.stringify({ error: "Not found"}));
+
+            clients.add(response);
+            sendTree(response, getCurrentTree());
+
+            request.on("close", () => {
+                clients.delete(response);
+            });
+
             return;
         }
 
-        const tree = getCurrentTree();
-
-        response.writeHead(200, {
+        response.writeHead(404, {
             "Content-Type": "application/json; charset=utf-8",
-            "Cache-Control": "no-store",
             "Access-Control-Allow-Origin": "*",
         });
 
-        response.end(JSON.stringify(tree));
-    });
+        response.end(JSON.stringify({ error: "Not found"}));
+    })
+
+
+    /**
+     * Отправляет новое UI-дерево всем подключённым browser renderer.
+     *
+     * @param {Array<object>} tree
+     * @returns {void}
+     */
+    function publishTree(tree) {
+        for (const client of clients) {
+            sendTree(client, tree);
+        }
+    }
 
     server.listen(port, host);
 
-    return server;
+    return {
+        server, 
+        publishTree,
+    };
 }
+
+

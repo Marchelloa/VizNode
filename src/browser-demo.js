@@ -1,26 +1,19 @@
 import { renderDOM } from "./dom-renderer.js";
-import { buildTree } from "./tree.js";
-import { createApplication } from "./application.js";
 
 
 const root = document.querySelector("#app");
+const events = new EventSource("http://127.0.0.1:3000/api/events");
 
-function render() {
-    const tree = buildTree(application.state);
-    renderDOM(tree, root);
+events.onmessage = (event) => {
+    try {
+        const tree = JSON.parse(event.data);
+        renderDOM(tree, root);
+    } catch (error) {
+        console.error("Unable to render the received tree.", error);
+    }
 }
 
-const application = createApplication({requestRender: render});
+events.onerror = () => {
+    console.error("SSE connection lost; waiting for reconnection.");
+};
 
-root.addEventListener("click", event => {
-    const action = event.target.closest("[data-intent]");
-
-    if (!action) return;
-
-    void application.dispatch({
-        type: "action",
-        intent: action.dataset.intent
-    });
-});
-
-render();
