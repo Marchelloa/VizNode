@@ -102,14 +102,10 @@ It is an experiment in separating useful state and permitted operations from a p
 The current prototype follows this cycle:
 
 ```text
-state
-  → buildTree(state)
-  → declarative UI tree
-  → console renderer or DOM renderer
-  → normalized action/input event
-  → application.dispatch(event)
-  → trusted handler or input update
-  → state
+Console event ─┐
+               ├→ application.dispatch(event) → state → buildTree(state)
+DOM event ─────┘                                         ├→ Console render
+                                                        └→ SSE → DOM render
 ```
 
 The main boundaries are:
@@ -120,9 +116,11 @@ The main boundaries are:
 - `src/console-renderer.js` renders the tree for the console;
 - `src/dom-renderer.js` converts the same tree into DOM elements;
 - `src/application.js` owns trusted action handlers and normalized event dispatch;
-- `src/app.js` is the current console entry point.
+- `src/browser-bridge.js` streams trees over SSE and forwards browser events to the application;
+- `src/browser-demo.js` receives trees and adapts DOM actions into normalized events;
+- `src/app.js` is the composition root for the shared state, console, and browser bridge.
 
-Both renderers use the same node tree. Application behavior is not duplicated between presentations.
+Both renderers operate simultaneously on the same state and receive the same node tree. Application behavior is not duplicated between presentations, and a newly opened browser joins the current application screen rather than starting a separate session.
 
 ### Current Prototype Status
 
@@ -135,14 +133,17 @@ Implemented:
 - one trusted action-handler registry;
 - normalized action and input events;
 - console rendering and interaction;
-- static DOM rendering for all current node types;
+- DOM rendering for all current node types;
+- browser actions forwarded to the shared application through HTTP dispatch;
+- live Node-to-browser tree updates through SSE;
+- interchangeable visual presets that restyle the current DOM without changing application state;
 - observer and effects channels;
 - an asynchronous demonstration transfer flow.
 
 Not yet implemented:
 
-- DOM event dispatch;
-- a browser entry point;
+- DOM input events for `data-bind` fields;
+- preservation or explicit synchronization of unfinished browser input during rerendering;
 - strict structural and semantic tree validation;
 - a replaceable `InterfaceBuilder` contract;
 - deterministic and AI builder providers behind that contract;
@@ -154,13 +155,20 @@ Not yet implemented:
 
 The prototype is being developed as a sequence of small vertical steps:
 
-1. Complete DOM action and input events.
-2. Add a browser entry point using the existing application core.
+1. Complete DOM input events and the browser transfer flow.
+2. Verify that a scenario can move between console and DOM in either direction.
 3. Stabilize and test the shared render lifecycle.
 4. Formalize and validate the UI-tree contract.
 5. Introduce a replaceable interface builder with a deterministic provider.
 6. Add an AI provider behind the same validated contract.
-7. Demonstrate the complete cycle in both console and DOM presentations.
+
+### Run the Prototype
+
+1. Run `npm start` to start the console application and local browser bridge.
+2. Open `index.html` through a local static server such as Live Server.
+3. Use actions in either the console or browser. Browser form editing is the next implementation step.
+
+The bridge listens on `127.0.0.1:3000`. Closing the browser does not stop the Node runtime; closing the console ends the application.
 
 The goal is not to build a large UI framework. The goal is to test whether a quiet, user-controlled interface can remain useful, safe, and technically coherent.
 
@@ -272,14 +280,10 @@ VizNode — это не:
 Текущий прототип работает по циклу:
 
 ```text
-state
-  → buildTree(state)
-  → декларативное UI-дерево
-  → console renderer или DOM renderer
-  → нормализованное action/input событие
-  → application.dispatch(event)
-  → доверенный обработчик или обновление input
-  → state
+Событие Console ─┐
+                 ├→ application.dispatch(event) → state → buildTree(state)
+Событие DOM ─────┘                                         ├→ Console render
+                                                          └→ SSE → DOM render
 ```
 
 Основные границы:
@@ -290,9 +294,11 @@ state
 - `src/console-renderer.js` отображает дерево в консоли;
 - `src/dom-renderer.js` преобразует то же дерево в DOM-элементы;
 - `src/application.js` содержит доверенные обработчики и диспетчеризацию нормализованных событий;
-- `src/app.js` является текущей консольной точкой входа.
+- `src/browser-bridge.js` передаёт деревья через SSE и направляет события браузера в приложение;
+- `src/browser-demo.js` получает деревья и преобразует действия DOM в нормализованные события;
+- `src/app.js` связывает общее состояние, консоль и browser bridge.
 
-Оба renderer используют одно дерево нод. Поведение приложения не дублируется между представлениями.
+Оба renderer одновременно работают с одним состоянием и получают одно дерево нод. Поведение приложения не дублируется между представлениями, а новая вкладка подключается к текущему экрану приложения вместо запуска отдельной сессии.
 
 ### Текущее состояние прототипа
 
@@ -305,14 +311,17 @@ state
 - единый реестр доверенных обработчиков;
 - нормализованные события action и input;
 - консольное отображение и взаимодействие;
-- статический DOM-рендеринг всех текущих типов нод;
+- DOM-рендеринг всех текущих типов нод;
+- передача действий браузера в общее приложение через HTTP dispatch;
+- живые обновления дерева из Node в браузер через SSE;
+- заменяемые визуальные пресеты, меняющие текущий DOM без изменения состояния приложения;
 - каналы observer и effects;
 - асинхронный демонстрационный сценарий перевода.
 
 Пока не реализовано:
 
-- отправка событий из DOM;
-- browser entry point;
+- DOM-события ввода для полей `data-bind`;
+- сохранение или явная синхронизация незавершённого браузерного ввода при повторном рендере;
 - строгая структурная и семантическая валидация дерева;
 - контракт заменяемого `InterfaceBuilder`;
 - детерминированный и AI providers за этим контрактом;
@@ -324,13 +333,20 @@ state
 
 Прототип развивается последовательностью небольших вертикальных шагов:
 
-1. Завершить DOM-события action и input.
-2. Добавить browser entry point на существующем прикладном ядре.
+1. Завершить DOM-события input и сценарий перевода в браузере.
+2. Проверить продолжение одного сценария из Console в DOM и обратно.
 3. Стабилизировать и протестировать общий жизненный цикл рендеринга.
 4. Формализовать и валидировать контракт UI-дерева.
 5. Ввести заменяемый interface builder с детерминированным provider.
 6. Добавить AI provider за тем же валидируемым контрактом.
-7. Продемонстрировать полный цикл в консольном и DOM-представлениях.
+
+### Запуск прототипа
+
+1. Выполнить `npm start`, чтобы запустить консольное приложение и локальный browser bridge.
+2. Открыть `index.html` через локальный статический сервер, например Live Server.
+3. Выполнять действия в консоли или браузере. Редактирование формы в браузере — следующий этап реализации.
+
+Мост слушает `127.0.0.1:3000`. Закрытие браузера не останавливает Node runtime; закрытие консоли завершает приложение.
 
 Цель проекта — не построить большой UI-фреймворк. Цель — проверить, может ли спокойный пользовательский интерфейс оставаться полезным, безопасным и технически цельным.
 
