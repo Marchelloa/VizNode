@@ -1,0 +1,320 @@
+:root {
+    color-scheme: light;
+
+    --navy-950: #071a2f;
+    --navy-900: #0a2440;
+    --navy-800: #123858;
+    --surface: #ffffff;
+    --surface-soft: #f3f7f7;
+    --text: #102a43;
+    --muted: #627586;
+    --border: #d8e3e5;
+    --accent: #087f6d;
+    --accent-hover: #066757;
+    --accent-soft: #e2f4ef;
+    --focus: rgba(8, 127, 109, 0.24);
+    --radius-large: 24px;
+    --radius: 13px;
+    --shadow: 0 30px 80px rgba(2, 18, 35, 0.28);
+
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 15% 8%, rgba(24, 164, 139, 0.2), transparent 28rem),
+        radial-gradient(circle at 88% 100%, rgba(49, 113, 155, 0.24), transparent 32rem),
+        linear-gradient(145deg, var(--navy-950), var(--navy-900) 58%, #0b2d48);
+}
+
+body::before {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    opacity: 0.18;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, #000, transparent 70%);
+}
+
+.bank-shell {
+    position: relative;
+    z-index: 1;
+    width: min(100% - 40px, 1080px);
+    min-height: 100vh;
+    margin: 0 auto;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 28px;
+    padding: 34px 0 24px;
+}
+
+.bank-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    color: #fff;
+}
+
+.bank-brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.bank-brand__mark {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 14px;
+    color: #fff;
+    background: linear-gradient(145deg, #16a98f, #087f6d);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.bank-brand__name {
+    display: grid;
+    gap: 2px;
+}
+
+.bank-brand__name strong {
+    font-size: 1.08rem;
+    letter-spacing: 0.01em;
+}
+
+.bank-brand__name small {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.session-status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.76);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.session-status__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4fe0b9;
+    box-shadow: 0 0 0 4px rgba(79, 224, 185, 0.12);
+}
+
+#app {
+    align-self: center;
+    width: min(100%, 560px);
+    margin: 20px auto;
+    padding: 42px;
+    background: var(--surface);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-large);
+    box-shadow: var(--shadow);
+}
+
+#app > p:first-child {
+    margin-top: 0;
+    margin-bottom: 28px;
+    color: var(--text);
+    font-size: clamp(1.7rem, 4vw, 2.2rem);
+    font-weight: 750;
+    letter-spacing: -0.045em;
+}
+
+p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+nav,
+section {
+    display: grid;
+    gap: 12px;
+}
+
+nav + nav,
+section + nav,
+nav + section,
+section + section {
+    margin-top: 26px;
+}
+
+h2 {
+    margin: 0 0 4px;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+section {
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+section p {
+    color: var(--text);
+    font-size: 1.02rem;
+    font-weight: 650;
+}
+
+button,
+input {
+    width: 100%;
+    min-height: 50px;
+    border-radius: var(--radius);
+    font: inherit;
+}
+
+button {
+    border: 0;
+    padding: 0 18px;
+    color: #fff;
+    background: var(--accent);
+    box-shadow: 0 8px 20px rgba(8, 127, 109, 0.18);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        transform 160ms ease,
+        box-shadow 160ms ease;
+}
+
+button:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 12px 24px rgba(8, 127, 109, 0.24);
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button[data-intent="back"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: none;
+}
+
+button[data-intent="back"]:hover {
+    color: var(--accent-hover);
+    background: #d3ece6;
+    box-shadow: none;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+label {
+    display: grid;
+    gap: 7px;
+}
+
+label span {
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+input {
+    border: 1px solid var(--border);
+    padding: 0 15px;
+    color: var(--text);
+    background: #fff;
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+input:hover {
+    border-color: #b9cacc;
+}
+
+input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--focus);
+    outline: 0;
+}
+
+input::placeholder {
+    color: #8b9ba8;
+}
+
+.bank-footer {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.46);
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+}
+
+@media (max-width: 600px) {
+    .bank-shell {
+        width: min(100% - 24px, 1080px);
+        gap: 18px;
+        padding-top: 20px;
+    }
+
+    .session-status span:last-child {
+        display: none;
+    }
+
+    .session-status {
+        padding: 10px;
+    }
+
+    #app {
+        margin: 8px auto;
+        padding: 28px 22px;
+        border-radius: 20px;
+    }
+
+    .bank-footer {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button {
+        transition: none;
+    }
+}

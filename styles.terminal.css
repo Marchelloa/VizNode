@@ -1,0 +1,342 @@
+:root {
+    color-scheme: dark;
+
+    --black: #070b09;
+    --panel: #0c1310;
+    --panel-raised: #111b16;
+    --line: #294237;
+    --line-bright: #416755;
+    --green: #72f1b8;
+    --green-dim: #45b986;
+    --green-soft: rgba(114, 241, 184, 0.08);
+    --amber: #f4c95d;
+    --text: #d7e7df;
+    --muted: #789486;
+    --danger: #ff7a72;
+
+    font-family:
+        "Cascadia Mono",
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 24px;
+    color: var(--text);
+    background:
+        repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.012) 0,
+            rgba(255, 255, 255, 0.012) 1px,
+            transparent 1px,
+            transparent 4px
+        ),
+        radial-gradient(circle at 50% 10%, #15271e 0, var(--black) 58%);
+}
+
+body::after {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    background: radial-gradient(circle, transparent 55%, rgba(0, 0, 0, 0.58));
+}
+
+.terminal-shell {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1040px);
+    min-height: calc(100vh - 48px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    border: 1px solid var(--line-bright);
+    background: rgba(7, 11, 9, 0.86);
+    box-shadow:
+        0 0 0 4px rgba(65, 103, 85, 0.1),
+        0 30px 100px rgba(0, 0, 0, 0.58);
+}
+
+.terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--line-bright);
+    background: var(--panel-raised);
+}
+
+.terminal-identity {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.terminal-symbol {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    background: var(--green-soft);
+    font-weight: 800;
+    letter-spacing: -0.08em;
+}
+
+.terminal-identity div {
+    display: grid;
+    gap: 5px;
+}
+
+.terminal-identity strong {
+    color: var(--green);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+}
+
+.terminal-identity small,
+.terminal-meta,
+.terminal-footer {
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+}
+
+.terminal-connection {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--green);
+    font-size: 0.7rem;
+    letter-spacing: 0.07em;
+}
+
+.terminal-connection span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 12px var(--green);
+}
+
+.terminal-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 9px 22px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+}
+
+#app {
+    align-self: center;
+    width: min(100% - 44px, 660px);
+    margin: 42px auto;
+    padding: 30px;
+    border: 1px solid var(--line-bright);
+    background:
+        linear-gradient(135deg, rgba(114, 241, 184, 0.025), transparent 45%),
+        var(--panel);
+    box-shadow: inset 0 0 40px rgba(114, 241, 184, 0.025);
+}
+
+#app::before {
+    display: block;
+    margin-bottom: 22px;
+    color: var(--amber);
+    content: "> INTERFACE_TREE::ACTIVE";
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+}
+
+#app > p:first-child {
+    margin: 0 0 26px;
+    color: var(--green);
+    font-size: clamp(1.35rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+}
+
+#app > p:first-child::before {
+    color: var(--amber);
+    content: "[ ";
+}
+
+#app > p:first-child::after {
+    color: var(--amber);
+    content: " ]";
+}
+
+p {
+    color: var(--text);
+    line-height: 1.55;
+}
+
+nav,
+section {
+    display: grid;
+    gap: 10px;
+}
+
+nav + nav,
+section + nav,
+nav + section,
+section + section {
+    margin-top: 24px;
+}
+
+h2 {
+    margin: 0 0 5px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+h2::before {
+    color: var(--amber);
+    content: "// ";
+}
+
+section {
+    padding: 18px;
+    border: 1px dashed var(--line-bright);
+    background: rgba(114, 241, 184, 0.025);
+}
+
+section p {
+    margin: 0;
+    color: var(--green);
+}
+
+button,
+input {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 0;
+    font: inherit;
+}
+
+button {
+    border: 1px solid var(--line-bright);
+    padding: 0 16px;
+    color: var(--green);
+    background: var(--green-soft);
+    text-align: left;
+    cursor: pointer;
+    transition:
+        color 120ms ease,
+        background-color 120ms ease,
+        border-color 120ms ease;
+}
+
+button::before {
+    margin-right: 12px;
+    color: var(--amber);
+    content: ">";
+}
+
+button:hover {
+    border-color: var(--green);
+    color: var(--black);
+    background: var(--green);
+}
+
+button:hover::before {
+    color: var(--black);
+}
+
+button[data-intent="back"] {
+    color: var(--muted);
+    background: transparent;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+}
+
+label {
+    display: grid;
+    gap: 7px;
+}
+
+label span {
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+input {
+    border: 1px solid var(--line-bright);
+    padding: 0 13px;
+    color: var(--green);
+    background: var(--black);
+}
+
+input::placeholder {
+    color: #536c60;
+}
+
+.terminal-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 12px 22px;
+    border-top: 1px solid var(--line);
+}
+
+.terminal-footer span:first-child {
+    color: var(--green);
+}
+
+@media (max-width: 640px) {
+    body {
+        padding: 10px;
+    }
+
+    .terminal-shell {
+        min-height: calc(100vh - 20px);
+    }
+
+    .terminal-header,
+    .terminal-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .terminal-connection {
+        display: none;
+    }
+
+    .terminal-meta {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    #app {
+        width: calc(100% - 24px);
+        margin: 22px auto;
+        padding: 22px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button {
+        transition: none;
+    }
+}

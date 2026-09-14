@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles.terminal.css">
+    <title>VizNode Terminal Presentation</title>
+</head>
+<body>
+    <div class="terminal-shell">
+        <header class="terminal-header">
+            <div class="terminal-identity">
+                <span class="terminal-symbol" aria-hidden="true">VN</span>
+                <div>
+                    <strong>VIZNODE FINANCIAL TERMINAL</strong>
+                    <small>DECLARATIVE INTERFACE CHANNEL</small>
+                </div>
+            </div>
+
+            <div class="terminal-connection">
+                <span aria-hidden="true"></span>
+                STATE LINK ACTIVE
+            </div>
+        </header>
+
+        <div class="terminal-meta" aria-hidden="true">
+            <span>SESSION 01</span>
+            <span>LOCALHOST:3000</span>
+            <span>RENDERER / DOM</span>
+        </div>
+
+        <main id="app" class="terminal-screen"></main>
+
+        <footer class="terminal-footer">
+            <span>READY</span>
+            <span>INTENTS ARE DISPATCHED THROUGH TRUSTED APPLICATION HANDLERS</span>
+        </footer>
+    </div>
+
+    <script type="module" src="./src/browser-demo.js"></script>
+</body>
+</html>

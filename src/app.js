@@ -24,6 +24,10 @@ const rl = readline.createInterface({
 });
 
 
+let currentActionMap = {};
+let pendingInputNode = null;
+
+
 // ---------------- APPLICATION ----------------
 const application = createApplication({
   requestRender: loop,
@@ -44,7 +48,10 @@ function getCurrentTree() {
 }
 
 // ---------------- BROWSER BRIDGE ----------------
-const browserBridge = startBrowserBridge({ getCurrentTree });
+const browserBridge = startBrowserBridge({
+  getCurrentTree,
+  dispatchEvent: application.dispatch,
+});
 
 
 // ---------------- CONSOLE EVENT ADAPTERS ----------------
@@ -56,18 +63,9 @@ const browserBridge = startBrowserBridge({ getCurrentTree });
  * @returns {void}
  */
 function handleInputEdit(inputNode) {
-  rl.question(`${inputNode.props.label}: `, async (value) => {
-    const handled = await application.dispatch({
-      type: "input",
-      bind: inputNode.props.bind,
-      value: value.trim(),
-    });
-
-    if (!handled) {
-      console.log("\nInput event was rejected.");
-      setTimeout(loop, 1000);
-    }
-  });
+  pendingInputNode = inputNode;
+  rl.setPrompt(`${inputNode.props.label}: `);
+  rl.prompt();
 }
 
 
@@ -87,6 +85,60 @@ async function handleAction(actionNode) {
   if (!handled) {
     console.log("\nAction event was rejected.");
     setTimeout(loop, 1000);
+  }
+}
+
+/**
+ * Обрабатывает одну строку пользовательского ввода Console.
+ *
+ * @param {string} input
+ * @returns {Promise<void>}
+ */
+async function handleConsoleLine(input) {
+  const trimmed = input.trim();
+
+  if (pendingInputNode) {
+    const inputNode = pendingInputNode;
+    pendingInputNode = null;
+
+    const handled = await application.dispatch({
+      type: "input",
+      bind: inputNode.props.bind,
+      value: trimmed,
+    });
+
+    if (!handled) {
+      console.log("\nInput event was rejected.");
+      setTimeout(loop, 1000);
+    }
+
+    return;
+  }
+
+  if (
+    trimmed === "q" ||
+    trimmed === "quit" ||
+    trimmed === "exit"
+  ) {
+    rl.close();
+    return;
+  }
+
+  const target = currentActionMap[trimmed];
+
+  if (!target) {
+    console.log("\nInvalid input. Try again.");
+    setTimeout(loop, 1000);
+    return;
+  }
+
+  if (target.type === "input") {
+    handleInputEdit(target);
+    return;
+  }
+
+  if (target.type === "action") {
+    await handleAction(target);
   }
 }
 
@@ -110,6 +162,7 @@ function handleClose() {
   process.exit(0);
 }
 
+rl.on("line", handleConsoleLine);
 rl.on("close", handleClose);
 
 
@@ -121,45 +174,17 @@ rl.on("close", handleClose);
  */
 function loop() {
   const tree = getCurrentTree();
-  const actionMap = renderConsole(tree);
+
+  currentActionMap = renderConsole(tree);
   browserBridge.publishTree(tree);
 
   if (application.state.status.phase === "sending") {
     return;
   }
 
-  rl.question("> ", (input) => {
-    const trimmed = input.trim();
-
-    if (
-      trimmed === "q" ||
-      trimmed === "quit" ||
-      trimmed === "exit"
-    ) {
-      rl.close();
-      return;
-    }
-
-    const target = actionMap[trimmed];
-
-    if (!target) {
-      console.log("\nInvalid input. Try again.");
-      setTimeout(loop, 1000);
-      return;
-    }
-
-    if (target.type === "input") {
-      handleInputEdit(target);
-      return;
-    }
-
-    if (target.type === "action") {
-      void handleAction(target);
-      return;
-    }
-  });
+  pendingInputNode = null;
+  rl.setPrompt("> ");
+  rl.prompt();
 }
-
-
 // ---------------- APP START ----------------
 loop();
