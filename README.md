@@ -136,14 +136,16 @@ Implemented:
 - DOM rendering for all current node types;
 - browser actions forwarded to the shared application through HTTP dispatch;
 - live Node-to-browser tree updates through SSE;
+- DOM input events with sequential input/action requests;
+- focus, selection, and pending local input preservation during DOM rerendering;
 - interchangeable visual presets that restyle the current DOM without changing application state;
 - observer and effects channels;
 - an asynchronous demonstration transfer flow.
 
 Not yet implemented:
 
-- DOM input events for `data-bind` fields;
-- preservation or explicit synchronization of unfinished browser input during rerendering;
+- event-specific input acknowledgements (the prototype currently compares HTTP acceptance and values from SSE);
+- robust recovery from rejected input, network failures, and concurrent editing across tabs;
 - strict structural and semantic tree validation;
 - a replaceable `InterfaceBuilder` contract;
 - deterministic and AI builder providers behind that contract;
@@ -155,7 +157,7 @@ Not yet implemented:
 
 The prototype is being developed as a sequence of small vertical steps:
 
-1. Complete DOM input events and the browser transfer flow.
+1. Verify the complete browser transfer flow, including rapid input followed by Submit.
 2. Verify that a scenario can move between console and DOM in either direction.
 3. Stabilize and test the shared render lifecycle.
 4. Formalize and validate the UI-tree contract.
@@ -166,7 +168,7 @@ The prototype is being developed as a sequence of small vertical steps:
 
 1. Run `npm start` to start the console application and local browser bridge.
 2. Open `index.html` through a local static server such as Live Server.
-3. Use actions in either the console or browser. Browser form editing is the next implementation step.
+3. Use actions and edit form fields in either the console or browser.
 
 The bridge listens on `127.0.0.1:3000`. Closing the browser does not stop the Node runtime; closing the console ends the application.
 
@@ -314,14 +316,16 @@ VizNode — это не:
 - DOM-рендеринг всех текущих типов нод;
 - передача действий браузера в общее приложение через HTTP dispatch;
 - живые обновления дерева из Node в браузер через SSE;
+- DOM-события ввода и последовательная отправка input/action;
+- сохранение фокуса, выделения и неподтверждённого локального ввода при повторном DOM-рендере;
 - заменяемые визуальные пресеты, меняющие текущий DOM без изменения состояния приложения;
 - каналы observer и effects;
 - асинхронный демонстрационный сценарий перевода.
 
 Пока не реализовано:
 
-- DOM-события ввода для полей `data-bind`;
-- сохранение или явная синхронизация незавершённого браузерного ввода при повторном рендере;
+- подтверждение конкретного события ввода (прототип пока сопоставляет принятие через HTTP и значения из SSE);
+- надёжное восстановление после отклонённого ввода, сетевых ошибок и одновременного редактирования из нескольких вкладок;
 - строгая структурная и семантическая валидация дерева;
 - контракт заменяемого `InterfaceBuilder`;
 - детерминированный и AI providers за этим контрактом;
@@ -333,7 +337,7 @@ VizNode — это не:
 
 Прототип развивается последовательностью небольших вертикальных шагов:
 
-1. Завершить DOM-события input и сценарий перевода в браузере.
+1. Проверить полный сценарий перевода в браузере, включая быстрый ввод с последующим Submit.
 2. Проверить продолжение одного сценария из Console в DOM и обратно.
 3. Стабилизировать и протестировать общий жизненный цикл рендеринга.
 4. Формализовать и валидировать контракт UI-дерева.
@@ -344,7 +348,7 @@ VizNode — это не:
 
 1. Выполнить `npm start`, чтобы запустить консольное приложение и локальный browser bridge.
 2. Открыть `index.html` через локальный статический сервер, например Live Server.
-3. Выполнять действия в консоли или браузере. Редактирование формы в браузере — следующий этап реализации.
+3. Выполнять действия и редактировать поля формы в консоли или браузере.
 
 Мост слушает `127.0.0.1:3000`. Закрытие браузера не останавливает Node runtime; закрытие консоли завершает приложение.
 

@@ -3,9 +3,11 @@
  *
  * @param {Array<object>} tree
  * @param {HTMLElement} root
+ * @param {Map<string, {value: string}>} [pendingInputs]
+ * — неподтверждённые локальные значения по bind.
  * @returns {void}
  */
-export function renderDOM(tree, root) {
+export function renderDOM(tree, root, pendingInputs = new Map()) {
     if (!root) {
         throw new TypeError("DOM render root is required");
     }
@@ -21,7 +23,45 @@ export function renderDOM(tree, root) {
         fragment.append(createNodeElement(node, document));
     }
 
+    const activeElement = document.activeElement;
+
+    const focusedField =
+        activeElement instanceof HTMLInputElement &&
+            root.contains(activeElement)
+            ? {
+                bind: activeElement.dataset.bind,
+                selectionStart: activeElement.selectionStart,
+                selectionEnd: activeElement.selectionEnd,
+                selectionDirection: activeElement.selectionDirection,
+            }
+            : null;
+
     root.replaceChildren(fragment);
+
+    // Не заменяем свежий локальный ввод запаздывающими данными.
+    for (const input of root.querySelectorAll("input[data-bind]")) {
+        const pending = pendingInputs.get(input.dataset.bind);
+
+        if (pending) {
+            input.value = pending.value;
+        }
+    }
+
+
+    if (focusedField?.bind) {
+        const replacement = Array.from(
+            root.querySelectorAll("input[data-bind]"),
+        ).find((input) => input.dataset.bind === focusedField.bind);
+
+        if (replacement) {
+            replacement.focus({ preventScroll: true });
+            replacement.setSelectionRange(
+                focusedField.selectionStart,
+                focusedField.selectionEnd,
+                focusedField.selectionDirection,
+            );
+        }
+    }
 }
 
 /**
