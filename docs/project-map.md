@@ -1,260 +1,67 @@
-# VizNode Project Map
+# VizNode — карта проекта
 
-## Зачем Этот Файл
+Актуализировано: 16 сентября 2026 года по текущему коду.
 
-Этот документ нужен для быстрого восстановления контекста проекта: что уже реализовано, где находится логика и как проходит основной flow.
+## Рабочая модель
 
-## Коротко О Проекте
-
-VizNode — прототип интерфейса с единой прикладной базой и заменяемым представлением.
-
-Сейчас реализован консольный интерфейс. Целевая модель предполагает, что console и DOM:
-
-- строятся из одного `state` и одного формата UI-дерева;
-- создают одинаковые события action/input;
-- вызывают один `application.dispatch(event)`;
-- используют единственный реестр `actionHandlers`;
-- не дублируют прикладную или серверную логику.
-
-## Главная Ментальная Модель
+Одно приложение в Node владеет общим состоянием, обработчиками и построением дерева. Console и одна браузерная вкладка представляют это же приложение. Несколько браузерных вкладок не входят в поддерживаемый сценарий; технический запрет второго подключения пока не реализован.
 
 ```text
-state
-  ↓
-buildTree(state)
-  ↓
-UI-дерево
-  ↓
-renderer
-  ↓
-унифицированное событие
-  ↓
-application.dispatch(event)
-  ↓
-actionHandlers / input update
-  ↓
-state
-  ↓
-requestRender()
+Console input ─┐
+              ├→ application.dispatch(event) → state → buildTree(state)
+DOM input ────┘                                         ├→ Console
+                                                       └→ SSE → DOM
 ```
 
-Сейчас к приложению подключён console renderer. DOM renderer уже умеет преобразовывать все текущие типы UI-нод в статическое DOM-дерево, но DOM-события и browser entry point ещё не подключены. AI-построитель дерева также пока не реализован.
+DOM action/input подключены. Браузер получает готовое дерево и не создаёт собственный экземпляр приложения. AI builder пока не реализован.
 
-## Кто За Что Отвечает
+## Модули
 
-### `src/app.js`
+| Файл | Ответственность |
+| --- | --- |
+| `src/app.js` | Сборка приложения, readline, Console-адаптер, запуск browser bridge, общий render loop и завершение процесса. |
+| `src/application.js` | Общий dispatch, банковские handlers, валидация формы, асинхронный перевод, статус и уведомления. |
+| `src/state.js` | Общее состояние банковского примера и запись по существующему пути через setByPath. Allowlist путей пока отсутствует. |
+| `src/tree.js` | Чистое построение дерева для экранов main, balance и transfer. |
+| `src/nodes.js` | Фабрики text, action, input, menu и container. Корень дерева — массив. |
+| `src/console-renderer.js` | Вывод дерева и построение actionMap для Console-адаптера. |
+| `src/dom-renderer.js` | Создание DOM, восстановление локального ввода, фокуса и выделения после replaceChildren. |
+| `src/browser-demo.js` | SSE, адаптация click/input, очередь HTTP-событий, временные pendingInputs и подтверждение по значениям. |
+| `src/browser-bridge.js` | Локальный HTTP/SSE-мост: GET /api/events, POST /api/dispatch, CORS preflight. |
+| `src/server.js` | Эмуляция backend перевода с задержкой и собственным балансом. |
+| `src/observer.js` | Подписки на изменения состояния и события приложения; доставка снимков через structuredClone. |
+| `src/effects.js` | Демонстрационный журнал состояния, событий и уведомлений. |
 
-Консольная точка входа и адаптер среды.
+`index.html` содержит постоянную оболочку и `#app`. `styles.css` выбирает CSS-пресет; сейчас подключён `styles.terminal.css`. Темы меняют оформление без изменения состояния. Отдельные `index.bank.html` и `index.terminal.html` — демонстрационные заготовки.
 
-Здесь находятся:
-
-- настройка `readline`;
-- запуск effects;
-- создание общего приложения;
-- построение и консольный рендер текущего дерева;
-- преобразование console input в унифицированные события;
-- завершение процесса и печать effect log.
-
-`app.js` не содержит прикладной сценарий перевода и не выбирает обработчик по `intent` самостоятельно.
-
-### `src/application.js`
-
-Общее прикладное ядро, независимое от способа отображения.
-
-Содержит:
-
-- единственный `actionHandlers`;
-- `dispatch(event)` для action/input;
-- `submitTransferFlow()`;
-- клиентскую валидацию формы;
-- управление статусом;
-- пользовательские уведомления;
-- изменение связанных со state input-полей;
-- экземпляр demo-сервера;
-- вызов renderer-neutral callback `requestRender()`.
-
-Публичный контракт создаваемого приложения:
+## Текущий API
 
 ```js
-const application = createApplication({
-  requestRender,
-});
-
+const application = createApplication({ requestRender });
 application.state;
 application.actionHandlers;
-application.dispatch(event);
-```
-
-### `src/state.js`
-
-Хранит клиентское состояние:
-
-- `screen`;
-- `balance`;
-- `transferForm`;
-- `status`.
-
-Также предоставляет `setByPath(...)` для обновления поля по разрешённому пути.
-
-### `src/tree.js`
-
-Детерминированно строит UI-дерево из текущего `state`.
-
-Функция не рендерит интерфейс и не изменяет состояние.
-
-### `src/nodes.js`
-
-Содержит фабрики текущих типов нод:
-
-- `textNode`;
-- `actionNode`;
-- `inputNode`;
-- `menuNode`;
-- `containerNode`.
-
-Корень дерева сейчас является массивом нод.
-
-### `src/console-renderer.js`
-
-Рендерит общее дерево в консоль и возвращает `actionMap`, связывающий номер пункта с action/input-нодой.
-
-Renderer не изменяет `state` и не выполняет `actionHandlers`.
-
-### `src/dom-renderer.js`
-
-Преобразует общее UI-дерево в DOM:
-
-- поддерживает `text`, `action`, `input`, `menu` и `container`;
-- рекурсивно строит составные ноды;
-- сохраняет `intent` и `bind` в `data-*` атрибутах;
-- устанавливает текст через `textContent`;
-- полностью заменяет содержимое переданного `root`;
-- пока не создаёт нормализованные события и не вызывает `application.dispatch(event)`.
-
-### `src/server.js`
-
-Эмулирует backend:
-
-- выполняет `executeTransfer(...)`;
-- проверяет бизнес-ограничения;
-- хранит серверный баланс;
-- возвращает `ok/error` и новый баланс.
-
-### `src/observer.js`
-
-Предоставляет два канала:
-
-- изменения `state`;
-- события приложения.
-
-Основные функции:
-
-- `notifyStateChanged(...)`;
-- `notifyAppEvent(...)`.
-
-### `src/effects.js`
-
-Регистрирует наблюдателей и ведёт демонстрационный журнал:
-
-- `[STATE] ...`;
-- `[EVENT] ...`;
-- `[NOTICE] ...`;
-- demo server logs.
-
-## Унифицированные События
-
-Console adapter передаёт приложению action:
-
-```js
-{
-  type: "action",
-  intent: "open_transfer",
-}
-```
-
-Input передаётся в том же стиле:
-
-```js
-{
+await application.dispatch({ type: "action", intent: "open_transfer" });
+await application.dispatch({
   type: "input",
   bind: "transferForm.amount",
   value: "500",
-}
-```
-
-Следующий этап DOM renderer должен формировать события с тем же контрактом.
-
-## Основной Flow Перевода
-
-1. `app.js` рендерит дерево текущего состояния.
-2. Пользователь выбирает action или input.
-3. Console adapter создаёт нормализованное событие.
-4. `application.dispatch(event)` принимает событие.
-5. Action-событие направляется в `actionHandlers[intent]`.
-6. Input-событие обновляет поле через `setByPath(...)`.
-7. `submit_transfer` запускает `submitTransferFlow()`.
-8. Flow валидирует форму, меняет статус и вызывает demo-сервер.
-9. После ответа обновляются клиентский `state` и события наблюдателей.
-10. `requestRender()` возвращает управление активному представлению.
-
-## Жизненный Цикл Отображения
-
-`application.js` не импортирует console или DOM renderer. Вместо этого при создании получает callback:
-
-```js
-const application = createApplication({
-  requestRender: loop,
 });
 ```
 
-Для консоли `requestRender` указывает на `loop()`. В будущем DOM-точка входа сможет передать собственную функцию рендера.
+Это API текущего банковского прототипа: state импортируется внутри application.js, а demo-сервер создаётся там же. Передача произвольных initialState, buildTree и handlers пока не реализована.
 
-Текущий консольный lifecycle требует внимания: повторный `requestRender()` не должен создавать несколько конкурирующих `rl.question(...)`. Это отдельная задача стабилизации общего render lifecycle.
+## Жизненный цикл
 
-## Что Уже Реализовано Для Общей Базы
+`requestRender` вызывает общий `loop()`: дерево строится один раз и передаётся Console и SSE-мосту. Console использует постоянный `rl.on("line", handleConsoleLine)`, а не вложенные `rl.question`. Во время sending loop не выводит новый prompt; это не запрет действий на уровне ядра.
 
-- прикладная логика отделена от консольной точки входа;
-- создан единый `actionHandlers`;
-- создан `application.dispatch(event)`;
-- action/input представлены унифицированными событиями;
-- console adapter работает через общий dispatch;
-- `requestRender` не зависит от конкретного renderer;
-- текущий формат UI-дерева сохранён;
-- console renderer выделен в `src/console-renderer.js`;
-- DOM renderer строит статическое представление всех текущих типов нод.
+Браузер отправляет события последовательно. HTTP-подтверждение означает принятие события. В случае submit_transfer обработчик запускает flow через void, поэтому dispatch не ожидает завершения перевода. После ответа demo-сервера flow обновляет состояние и запрашивает новый render.
 
-## Что Ещё Не Реализовано
+## Статус и дальнейшая работа
 
-- строгий валидатор UI-дерева;
-- `InterfaceBuilder` и заменяемые providers;
-- DOM action/input events и browser entry point;
-- AI provider;
-- allowlist для `intent` и `bind` на границе AI;
-- безопасный fallback на статическое дерево;
-- окончательный стандартный runtime API.
+Пользователь подтвердил, что основной прототип работает согласно замыслу. Автоматических тестов пока нет: npm test является заглушкой. Проверки задержек и ошибок DOM-ввода не зафиксированы как завершённые.
 
-## Ближайший Практичный План
+Основные открытые вопросы: обновление состояния и render как единый контракт; повторный Submit и ошибки async-операций; восстановление после ошибки input; валидация дерева и внешних событий; отделение ядра от банковского примера.
 
-1. Стабилизировать lifecycle `requestRender()` в консоли.
-2. Добавить тесты `application.dispatch(event)`.
-3. Зафиксировать и валидировать текущую схему UI-дерева.
-4. Добавить `InterfaceBuilder` со статическим provider на основе `buildTree`.
-5. Подключить DOM events и browser entry point к готовому DOM renderer.
-6. Подключить AI provider к тому же контракту дерева.
+Направление обсуждения — понятный API для создания дерева и обработчиков. Второе небольшое приложение без изменения ядра предложено как критерий универсальности, но конкретный API и его реализация ещё не согласованы.
 
-## Быстрый Возврат В Контекст
-
-После паузы читать проект лучше в таком порядке:
-
-1. `README.md`;
-2. `docs/project-map.md`;
-3. `src/application.js`;
-4. `src/app.js`;
-5. `src/state.js`;
-6. `src/tree.js`;
-7. `src/nodes.js`;
-8. `src/console-renderer.js`;
-9. `src/dom-renderer.js`;
-10. `src/server.js`;
-11. `src/observer.js`;
-12. `src/effects.js`.
+Актуальный контекст и ограничения: [handoff-context.md](handoff-context.md). Предлагаемые шаги: [VizNode_next_plan.md](ideas/VizNode_next_plan.md).

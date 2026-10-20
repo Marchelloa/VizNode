@@ -122,6 +122,8 @@ The main boundaries are:
 
 Both renderers operate simultaneously on the same state and receive the same node tree. Application behavior is not duplicated between presentations, and a newly opened browser joins the current application screen rather than starting a separate session.
 
+The supported setup is one application, the console, and one browser tab. Multiple tabs and cross-tab editing conflicts are outside the current scope. The bridge does not yet enforce a single-tab restriction.
+
 ### Current Prototype Status
 
 Implemented:
@@ -145,7 +147,7 @@ Implemented:
 Not yet implemented:
 
 - event-specific input acknowledgements (the prototype currently compares HTTP acceptance and values from SSE);
-- robust recovery from rejected input, network failures, and concurrent editing across tabs;
+- robust recovery from rejected input and network failures;
 - strict structural and semantic tree validation;
 - a replaceable `InterfaceBuilder` contract;
 - deterministic and AI builder providers behind that contract;
@@ -159,10 +161,10 @@ The prototype is being developed as a sequence of small vertical steps:
 
 1. Verify the complete browser transfer flow, including rapid input followed by Submit.
 2. Verify that a scenario can move between console and DOM in either direction.
-3. Stabilize and test the shared render lifecycle.
-4. Formalize and validate the UI-tree contract.
-5. Introduce a replaceable interface builder with a deterministic provider.
-6. Add an AI provider behind the same validated contract.
+3. Define input failure, repeated action, and asynchronous completion behavior; add focused tests.
+4. Design an understandable application API and evaluate it with a second small application, separating shared mechanisms from the banking demo. This API is not implemented or finalized yet.
+5. Formalize and validate the UI-tree contract, then introduce a replaceable interface builder with a deterministic provider.
+6. Add an optional AI provider behind the same validated contract.
 
 ### Run the Prototype
 
@@ -302,6 +304,8 @@ VizNode — это не:
 
 Оба renderer одновременно работают с одним состоянием и получают одно дерево нод. Поведение приложения не дублируется между представлениями, а новая вкладка подключается к текущему экрану приложения вместо запуска отдельной сессии.
 
+Поддерживаемый сценарий — одно приложение, консоль и одна браузерная вкладка. Несколько вкладок и конфликты между ними не входят в текущий объём. Технического запрета второго подключения пока нет.
+
 ### Текущее состояние прототипа
 
 Реализовано:
@@ -325,7 +329,7 @@ VizNode — это не:
 Пока не реализовано:
 
 - подтверждение конкретного события ввода (прототип пока сопоставляет принятие через HTTP и значения из SSE);
-- надёжное восстановление после отклонённого ввода, сетевых ошибок и одновременного редактирования из нескольких вкладок;
+- надёжное восстановление после отклонённого ввода и сетевых ошибок;
 - строгая структурная и семантическая валидация дерева;
 - контракт заменяемого `InterfaceBuilder`;
 - детерминированный и AI providers за этим контрактом;
@@ -339,10 +343,10 @@ VizNode — это не:
 
 1. Проверить полный сценарий перевода в браузере, включая быстрый ввод с последующим Submit.
 2. Проверить продолжение одного сценария из Console в DOM и обратно.
-3. Стабилизировать и протестировать общий жизненный цикл рендеринга.
-4. Формализовать и валидировать контракт UI-дерева.
-5. Ввести заменяемый interface builder с детерминированным provider.
-6. Добавить AI provider за тем же валидируемым контрактом.
+3. Определить поведение при ошибке ввода, повторном действии и завершении асинхронной операции; добавить целевые тесты.
+4. Спроектировать понятный API приложения и проверить его на втором небольшом примере, отделив общие механизмы от банковской логики. Конкретный API пока не согласован и не реализован.
+5. Формализовать и валидировать контракт UI-дерева, затем ввести заменяемый interface builder с детерминированным provider.
+6. Добавить необязательный AI provider за тем же валидируемым контрактом.
 
 ### Запуск прототипа
 
