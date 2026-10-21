@@ -1,11 +1,8 @@
 /**
- * Заменяет содержимое корневого элемента DOM-представлением UI-дерева.
- *
+ * Заменяет DOM, сохраняя локальный ввод, фокус и выделение.
  * @param {Array<object>} tree
  * @param {HTMLElement} root
- * @param {Map<string, {value: string}>} [pendingInputs]
- * — неподтверждённые локальные значения по bind.
- * @returns {void}
+ * @param {Map<string, {value: string}>} [pendingInputs] Неподтверждённые значения по bind.
  */
 export function renderDOM(tree, root, pendingInputs = new Map()) {
     if (!root) {
@@ -47,7 +44,6 @@ export function renderDOM(tree, root, pendingInputs = new Map()) {
         }
     }
 
-
     if (focusedField?.bind) {
         const replacement = Array.from(
             root.querySelectorAll("input[data-bind]"),
@@ -64,12 +60,6 @@ export function renderDOM(tree, root, pendingInputs = new Map()) {
     }
 }
 
-/**
- * Возвращает дочерние ноды составного элемента.
- *
- * @param {object} node
- * @returns {Array<object>}
- */
 function getChildren(node) {
     if (node.type === "menu") {
         return node.props.items;
@@ -81,13 +71,7 @@ function getChildren(node) {
 
     return [];
 }
-/**
- * Создаёт DOM-элемент для одной UI-ноды.
- *
- * @param {object} node
- * @param {Document} document
- * @returns {HTMLElement}
- */
+
 function createNodeElement(node, document) {
     if (node.type === "text") {
         const element = document.createElement("p");

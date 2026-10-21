@@ -3,33 +3,13 @@ import http from "node:http";
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 3000;
 
-/**
- * Отправляет UI-дерево одному SSE-клиенту.
- *
- * @param {import("node:http").ServerResponse} response
- * @param {Array<object>} tree
- * @returns {void}
- */
 function sendTree(response, tree) {
     response.write(`data: ${JSON.stringify(tree)}\n\n`)
 }
 
-
 /**
- * Запускает локальный HTTP-мост для browser renderer.
- *
- * Мост не владеет состоянием и не строит дерево самостоятельно.
- * Актуальное дерево он получает через переданную функцию.
- *
- * @param {object} options
- * @param {Function} options.getCurrentTree — возвращает актуальное UI-дерево.
- * @param {Function} options.dispatchEvent — передаёт событие приложению.
- * @param {string} [options.host] — адрес локального интерфейса.
- * @param {number} [options.port] — порт HTTP-сервера.
- * @returns {{
- *   server: import("node:http").Server,
- *   publishTree: (tree: Array<object>) => void
- * }} HTTP-сервер и функция публикации дерева.
+ * Мост получает дерево через getCurrentTree и передаёт события в dispatchEvent.
+ * Не владеет состоянием. Возвращает server и publishTree; host и port задают адрес.
  */
 export function startBrowserBridge({
     getCurrentTree,
@@ -37,7 +17,6 @@ export function startBrowserBridge({
     host = DEFAULT_HOST,
     port = DEFAULT_PORT,
 }) {
-    // Проверяем обязательные зависимости моста.
     if (typeof getCurrentTree !== "function") {
         throw new TypeError("getCurrentTree must be a function");
     }
@@ -46,10 +25,8 @@ export function startBrowserBridge({
         throw new TypeError("dispatchEvent must be a function");
     }
 
-    // Храним открытые SSE-соединения browser renderer.
     const clients = new Set();
 
-    // Обрабатываем входящие HTTP-запросы браузера.
     const server = http.createServer(async (request, response) => {
         // Разрешаем CORS preflight для отправки DOM-событий.
         if (request.method === "OPTIONS" && request.url === "/api/dispatch") {
@@ -63,9 +40,7 @@ export function startBrowserBridge({
             return;
         }
 
-        // Передаём нормализованное DOM-событие приложению.
         if (request.method === "POST" && request.url === "/api/dispatch") {
-            // Собираем JSON-тело запроса.
             let body = "";
 
             for await (const chunk of request) {
@@ -74,7 +49,6 @@ export function startBrowserBridge({
 
             let event;
 
-            // Преобразуем тело запроса в объект события.
             try {
                 event = JSON.parse(body);
             } catch {
@@ -89,8 +63,6 @@ export function startBrowserBridge({
                 return;
             }
 
-
-            // Передаём событие единому application dispatch.
             try {
                 const handled = await dispatchEvent(event);
 
@@ -114,7 +86,6 @@ export function startBrowserBridge({
             return;
         }
 
-        // Подключаем browser renderer к потоку UI-деревьев.
         if (request.method === "GET" && request.url === "/api/events") {
             response.writeHead(200, {
                 "Content-Type": "text/event-stream; charset=utf-8",
@@ -133,7 +104,6 @@ export function startBrowserBridge({
             return;
         }
 
-        // Отклоняем неизвестные маршруты.
         response.writeHead(404, {
             "Content-Type": "application/json; charset=utf-8",
             "Access-Control-Allow-Origin": "*",
@@ -142,27 +112,17 @@ export function startBrowserBridge({
         response.end(JSON.stringify({ error: "Not found" }));
     })
 
-
-    /**
-     * Отправляет новое UI-дерево всем подключённым browser renderer.
-     *
-     * @param {Array<object>} tree
-     * @returns {void}
-     */
     function publishTree(tree) {
         for (const client of clients) {
             sendTree(client, tree);
         }
     }
 
-    // Запускаем мост только на локальном интерфейсе.
     server.listen(port, host);
 
-    // Возвращаем управление сервером и публикацией дерева.
     return {
         server, 
         publishTree,
     };
 }
-
 

@@ -1,7 +1,7 @@
-// ---------------- IMPORTS ----------------
 import readline from "readline";
 
 import { createApplication } from "./application.js";
+import { appDefinition } from "./app-definition.js";
 import { buildTree } from "./tree.js";
 import { renderConsole, print, spacer } from "./console-renderer.js";
 import { startBrowserBridge } from "./browser-bridge.js";
@@ -10,71 +10,40 @@ import { onStateChange, onAppEvent } from "./observer.js";
 
 import { effectLog, registerEffects } from "./effects.js";
 
-
 registerEffects({
   onStateChange,
   onAppEvent,
 });
 
-
-// ---------------- READLINE SETUP ----------------
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 });
 
-
 let currentActionMap = {};
 let pendingInputNode = null;
 
-
-// ---------------- APPLICATION ----------------
 const application = createApplication({
+  ...appDefinition,
   requestRender: loop,
 });
 
-
-// ---------------- SHARED TREE ----------------
-/**
- * Строит UI-дерево из актуального состояния приложения.
- *
- * Функция является общей точкой получения текущего представления
- * для подключённых renderer.
- *
- * @returns {Array<object>} актуальные корневые UI-ноды.
- */
+/** Общий источник дерева для Console и DOM. */
 function getCurrentTree() {
   return buildTree(application.state);
 }
 
-// ---------------- BROWSER BRIDGE ----------------
 const browserBridge = startBrowserBridge({
   getCurrentTree,
   dispatchEvent: application.dispatch,
 });
 
-
-// ---------------- CONSOLE EVENT ADAPTERS ----------------
-/**
- * Запрашивает значение input-ноды и отправляет приложению
- * унифицированное input-событие.
- *
- * @param {{props: {label: string, bind: string}}} inputNode
- * @returns {void}
- */
+/** Только запрашивает ввод; событие отправится после получения строки. */
 function handleInputEdit(inputNode) {
   pendingInputNode = inputNode;
   rl.setPrompt(`${inputNode.props.label}: `);
   rl.prompt();
 }
-
-
-/**
- * Преобразует выбранную action-ноду в унифицированное событие приложения.
- *
- * @param {{props: {intent: string}}} actionNode
- * @returns {Promise<void>}
- */
 
 async function handleAction(actionNode) {
   const handled = await application.dispatch({
@@ -88,12 +57,6 @@ async function handleAction(actionNode) {
   }
 }
 
-/**
- * Обрабатывает одну строку пользовательского ввода Console.
- *
- * @param {string} input
- * @returns {Promise<void>}
- */
 async function handleConsoleLine(input) {
   const trimmed = input.trim();
 
@@ -142,13 +105,6 @@ async function handleConsoleLine(input) {
   }
 }
 
-
-// ---------------- CLOSE HANDLER ----------------
-/**
- * Завершает приложение и печатает накопленный журнал эффектов.
- *
- * @returns {never}
- */
 function handleClose() {
   spacer();
   print("=== EFFECT LOG ===");
@@ -165,13 +121,6 @@ function handleClose() {
 rl.on("line", handleConsoleLine);
 rl.on("close", handleClose);
 
-
-// ---------------- MAIN LOOP ----------------
-/**
- * Рендерит актуальное UI-дерево и ожидает следующее действие пользователя.
- *
- * @returns {void}
- */
 function loop() {
   const tree = getCurrentTree();
 
@@ -186,5 +135,4 @@ function loop() {
   rl.setPrompt("> ");
   rl.prompt();
 }
-// ---------------- APP START ----------------
 loop();

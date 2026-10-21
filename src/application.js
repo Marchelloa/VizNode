@@ -1,54 +1,45 @@
-import { createServer } from "./server.js";
 import { notifyAppEvent, notifyStateChanged } from "./observer.js";
-import { state, setByPath } from "./state.js";
+import { setByPath } from "./state.js";
 
 /**
- * Создаёт прикладное ядро, независимое от способа отображения.
- *
- * @param {object} options
- * @param {Function} options.requestRender — запрашивает повторное построение
- * представления из актуального состояния.
- * @returns {{
- *   state: object,
- *   actionHandlers: Object<string, Function>,
- *   dispatch: Function
- * }}
+ * Подключает состояние, фабрику сервера, actions и operations.
+ * Обработчики получают ctx; requestRender обновляет представления.
  */
-export function createApplication({ requestRender }) {
+export function createApplication({ 
+    state,
+    createServer,
+    actions,
+    operations,
+    requestRender,
+}) {
     if (typeof requestRender !== "function") {
         throw new TypeError("requestRender must be a function");
     }
 
     const server = createServer();
 
-    /**
-     * Отправляет пользовательское уведомление через канал событий приложения.
-     *
-     * @param {string} reason — сообщение о результате операции или возникшей проблеме.
-     * @returns {void}
-     */
+    /** Общие зависимости обработчиков и операций. */
+    const ctx = {
+        state,
+        operations,
+        server,
+        requestRender,
+        notifyStateChanged,
+        notifyAppEvent,
+    };
+
     function notify(reason) {
       notifyAppEvent("notify", { message: reason });
     }
 
-    /**
-     * Обновляет текущий статус интерфейса и уведомляет наблюдателей состояния.
-     *
-     * @param {"idle" | "sending" | "success" | "error"} phase — текущая фаза операции.
-     * @param {string} message — сообщение, отображаемое пользователю.
-     * @returns {void}
-     */
+    /** Уведомляет наблюдателей, но не вызывает render. */
     function setStatus(phase, message) {
       state.status.phase = phase;
       state.status.message = message;
       notifyStateChanged(state, `status_${phase}`);
     }
 
-    /**
-     * Сбрасывает статус интерфейса в исходное состояние и уведомляет наблюдателей.
-     *
-     * @returns {void}
-     */
+    /** Уведомляет наблюдателей, но не вызывает render. */
     function clearStatus() {
       state.status.phase = "idle";
       state.status.message = "";
@@ -56,13 +47,9 @@ export function createApplication({ requestRender }) {
     }
 
     /**
-     * Проверяет данные формы перед отправкой на сервер.
-     *
-     * Проверка относится только к требованиям клиентской формы. Бизнес-ограничения,
-     * например достаточность баланса, остаются ответственностью сервера.
-     *
-     * @param {{recipient: string, amount: string}} form — данные формы перевода.
-     * @returns {{ok: true} | {ok: false, reason: string}} результат проверки.
+     * Проверка формы на клиенте; бизнес-ограничения проверяет сервер.
+     * @param {{recipient: string, amount: string}} form
+     * @returns {{ok: true} | {ok: false, reason: string}}
      */
     function validateTransferForm(form) {
       if (!form.recipient.trim()) {
@@ -82,16 +69,7 @@ export function createApplication({ requestRender }) {
       return { ok: true };
     }
 
-    /**
-     * Выполняет полный клиентский сценарий перевода.
-     *
-     * Функция валидирует форму, показывает статус отправки, вызывает сервер,
-     * синхронизирует клиентский баланс и сообщает пользователю результат.
-     * Повторное отображение функция запрашивает самостоятельно через
-     * переданный приложению callback `requestRender`.
-     *
-     * @returns {Promise<void>}
-     */
+    /** Управляет уведомлениями и render; Promise не ожидает отложенный сброс статуса. */
     async function submitTransferFlow() {
       const form = {
         recipient: state.transferForm.recipient,
@@ -99,6 +77,7 @@ export function createApplication({ requestRender }) {
       };
 
       const validation = validateTransferForm(form);
+
       if (!validation.ok) {
         setStatus("error", validation.reason);
         notify(validation.reason);
@@ -136,74 +115,13 @@ export function createApplication({ requestRender }) {
       }, 1800);
     }
 
-    const actionHandlers = {
-      /**
-       * Открывает экран с текущим балансом.
-       *
-       * Повторное отображение запрашивается после изменения state.
-       *
-       * @returns {void}
-       */
-      show_balance() {
-        state.screen = "balance";
-        notifyStateChanged(state, "show_balance");
-        requestRender();
-      },
-
-      /**
-       * Открывает экран формы перевода.
-       *
-       * Повторное отображение запрашивается после изменения state.
-       *
-       * @returns {void}
-       */
-      open_transfer() {
-        state.screen = "transfer";
-        notifyStateChanged(state, "open_transfer");
-        requestRender();
-      },
-
-      /**
-       * Публикует событие отправки и запускает асинхронный flow перевода.
-       *
-       * Асинхронный flow самостоятельно запрашивает повторное отображение
-       * при изменении состояния.
-       *
-       * @returns {void}
-       */
-      submit_transfer() {
-        notifyAppEvent("submit_transfer", {
-          recipient: state.transferForm.recipient,
-          amount: state.transferForm.amount,
-        });
-
-        void submitTransferFlow();
-      },
-
-      /**
-       * Возвращает пользователя на главный экран.
-       *
-       * Повторное отображение запрашивается после изменения state.
-       *
-       * @returns {void}
-       */
-      back() {
-        state.screen = "main";
-        notifyStateChanged(state, "back");
-        requestRender();
-      },
-    };
+    const actionHandlers = actions;
 
     /**
-     * Обрабатывает унифицированное пользовательское событие.
-     *
-     * Renderer не вызывает actionHandlers и не изменяет state самостоятельно.
-     *
-     * @param {
-     *   {type: "action", intent: string} |
-     *   {type: "input", bind: string, value: string}
-     * } event
-     * @returns {Promise<boolean>} было ли событие принято.
+     * Renderer отправляет события сюда, а не меняет state напрямую.
+     * Ожидает обработчик, но не фоновые операции; ошибки передаёт вызывающему коду.
+     * @param {{type: "action", intent: string} | {type: "input", bind: string, value: string}} event
+     * @returns {Promise<boolean>} Принятие события, а не успех бизнес-операции.
      */
     async function dispatch(event) {
         if (!event || typeof event !== "object") {
@@ -217,7 +135,7 @@ export function createApplication({ requestRender }) {
                 return false;
             }
 
-            await handler();
+            await handler(ctx);
             return true;
         }
 

@@ -1,4 +1,126 @@
-/* @import "./styles.base.css"; */
-/* @import "./styles.bank.css"; */
-/* @import "./styles.lab.css"; */
-@import "./styles.terminal.css";
+:root {
+    color-scheme: light;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #202523;
+    background: #f6f7f6;
+    font-synthesis: none;
+    --muted: #646d67;
+    --border: #dfe4e0;
+    --accent: #24644b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; }
+.bank-shell {
+    width: min(100% - 48px, 960px);
+    min-height: 100vh;
+    margin: auto;
+    padding: 28px 0;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 40px;
+}
+.bank-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+.bank-brand { display: flex; align-items: center; gap: 12px; }
+.bank-brand__mark {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    font-size: 19px;
+    font-weight: 650;
+}
+.bank-brand__name { display: grid; gap: 2px; }
+.bank-brand__name strong { font-size: 16px; letter-spacing: -0.4px; }
+.bank-brand__name small { font-size: 12px; color: var(--muted); }
+.session-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+}
+.session-status__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+.bank-footer { display: none; }
+#app {
+    align-self: center;
+    width: min(100%, 460px);
+    margin: 0 auto 76px;
+    padding: 36px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 4px 24px #20252305;
+}
+#app > p:first-child {
+    margin: 0 0 28px;
+    color: #202523;
+    font-size: 28px;
+    font-weight: 650;
+    letter-spacing: -1px;
+    line-height: 1.2;
+}
+p { margin: 0; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
+nav, section { display: grid; gap: 12px; }
+#app > * + * { margin-top: 24px; }
+h2 { margin: 0 0 4px; color: var(--muted); font-size: 13px; font-weight: 500; }
+section p { color: #202523; font-size: 20px; font-weight: 550; letter-spacing: -0.4px; }
+label { display: grid; gap: 8px; }
+label + label { margin-top: 6px; }
+label span { font-size: 13px; font-weight: 550; }
+button, input {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 14px;
+}
+button {
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 140ms ease;
+}
+button:hover { background: #1a503b; }
+button[data-intent="back"] {
+    border-color: var(--border);
+    background: #fff;
+    color: #424c46;
+}
+button[data-intent="back"]:hover { background: #f3f5f3; }
+input {
+    min-width: 0;
+    padding: 11px 13px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #202523;
+}
+input::placeholder { color: #747e77; }
+input:hover { border-color: #a8b5ac; }
+button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+@media (max-width: 520px) {
+    .bank-shell { width: calc(100% - 32px); padding: 20px 0; gap: 32px; }
+    .session-status { display: none; }
+    #app { padding: 28px 22px; margin-bottom: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+}

@@ -1,4 +1,3 @@
-// ---------------- APP STATE ----------------
 const state = {
   screen: "main",
   balance: 12500,
@@ -12,18 +11,10 @@ const state = {
   },
 };
 
-
-// ---------------- STATE HELPERS ----------------
 /**
- * Записывает значение во вложенное поле объекта по пути с точечной нотацией.
- *
- * Если хотя бы одна часть пути отсутствует, состояние не изменяется,
- * а функция сообщает об ошибке в консоли.
- *
- * @param {object} obj — объект, который требуется изменить.
- * @param {string} path — путь к полю, например `transferForm.amount`.
- * @param {*} value — новое значение поля.
- * @returns {boolean} `true` при успешной записи, иначе `false`.
+ * Записывает значение по существующему пути, например transferForm.amount.
+ * При отсутствующем ключе выводит ошибку и возвращает false без записи.
+ * @returns {boolean} Удалось ли записать значение.
  */
 function setByPath(obj, path, value) {
   const keys = path.split(".");
@@ -48,7 +39,6 @@ function setByPath(obj, path, value) {
   target[lastKey] = value;
   return true;
 }
-
 
 export {
   state,

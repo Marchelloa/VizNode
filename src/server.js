@@ -1,23 +1,12 @@
-/**
- * Создаёт изолированную эмуляцию сервера с собственным балансом.
- *
- * Серверный баланс является источником истины, а клиент обновляет свою копию
- * только после успешного ответа `executeTransfer()`.
- *
- * @returns {{executeTransfer: Function}} серверный API прототипа.
- */
+/** Серверный баланс — источник истины; клиент применяет его после успешного ответа. */
 export function createServer() {
     let balance = 12500;
 
     return {
         /**
-         * Проверяет бизнес-ограничения и выполняет перевод после искусственной задержки.
-         *
-         * @param {object} transfer — параметры перевода.
-         * @param {string} transfer.recipient — получатель.
-         * @param {number} transfer.amount — сумма перевода.
+         * Проверяет бизнес-ограничения после искусственной задержки.
+         * @param {{recipient: string, amount: number}} transfer
          * @returns {Promise<{ok: true, data: {balance: number}} | {ok: false, reason: string}>}
-         * результат операции и новый баланс либо причина отказа.
          */
         async executeTransfer({ recipient, amount }) {
             await new Promise((resolve) => {
