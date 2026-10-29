@@ -115,7 +115,7 @@ The main boundaries are:
 - `src/nodes.js` defines the available declarative node types;
 - `src/console-renderer.js` renders the tree for the console;
 - `src/dom-renderer.js` converts the same tree into DOM elements;
-- `src/application.js` owns trusted action handlers and normalized event dispatch;
+- `src/application.js` connects the application definition to normalized event dispatch;
 - `src/browser-bridge.js` streams trees over SSE and forwards browser events to the application;
 - `src/browser-demo.js` receives trees and adapts DOM actions into normalized events;
 - `src/app.js` is the composition root for the shared state, console, and browser bridge.
@@ -123,6 +123,8 @@ The main boundaries are:
 Both renderers operate simultaneously on the same state and receive the same node tree. Application behavior is not duplicated between presentations, and a newly opened browser joins the current application screen rather than starting a separate session.
 
 The supported setup is one application, the console, and one browser tab. Multiple tabs and cross-tab editing conflicts are outside the current scope. The bridge does not yet enforce a single-tab restriction.
+
+Application behavior is defined in src/app-definition.js: state, createServer, actions and operations. The composition root passes this definition to createApplication with requestRender. The factory creates a shared ctx and calls actions by intent; operations are called explicitly by application code. Input still depends on operations.clearStatus(ctx), so the runtime is not yet fully generic.
 
 ### Current Prototype Status
 
@@ -140,7 +142,7 @@ Implemented:
 - live Node-to-browser tree updates through SSE;
 - DOM input events with sequential input/action requests;
 - focus, selection, and pending local input preservation during DOM rerendering;
-- interchangeable visual presets that restyle the current DOM without changing application state;
+- a minimal light stylesheet independent of application state;
 - observer and effects channels;
 - an asynchronous demonstration transfer flow.
 
@@ -159,10 +161,10 @@ Not yet implemented:
 
 The prototype is being developed as a sequence of small vertical steps:
 
-1. Verify the complete browser transfer flow, including rapid input followed by Submit.
-2. Verify that a scenario can move between console and DOM in either direction.
+1. Extend the completed manual transfer checks with rapid input followed immediately by Submit and delayed SSE updates.
+2. Automate the manually verified navigation, input synchronization, form errors and transfer outcomes across console and DOM.
 3. Define input failure, repeated action, and asynchronous completion behavior; add focused tests.
-4. Design an understandable application API and evaluate it with a second small application, separating shared mechanisms from the banking demo. This API is not implemented or finalized yet.
+4. Design an understandable application API and evaluate it with a second small application, separating shared mechanisms from the banking demo. The state/actions/operations definition is implemented; broader lifecycle and update contracts remain open.
 5. Formalize and validate the UI-tree contract, then introduce a replaceable interface builder with a deterministic provider.
 6. Add an optional AI provider behind the same validated contract.
 
@@ -297,7 +299,7 @@ VizNode — это не:
 - `src/nodes.js` определяет доступные типы декларативных нод;
 - `src/console-renderer.js` отображает дерево в консоли;
 - `src/dom-renderer.js` преобразует то же дерево в DOM-элементы;
-- `src/application.js` содержит доверенные обработчики и диспетчеризацию нормализованных событий;
+- `src/application.js` подключает описание приложения к диспетчеризации нормализованных событий;
 - `src/browser-bridge.js` передаёт деревья через SSE и направляет события браузера в приложение;
 - `src/browser-demo.js` получает деревья и преобразует действия DOM в нормализованные события;
 - `src/app.js` связывает общее состояние, консоль и browser bridge.
@@ -305,6 +307,8 @@ VizNode — это не:
 Оба renderer одновременно работают с одним состоянием и получают одно дерево нод. Поведение приложения не дублируется между представлениями, а новая вкладка подключается к текущему экрану приложения вместо запуска отдельной сессии.
 
 Поддерживаемый сценарий — одно приложение, консоль и одна браузерная вкладка. Несколько вкладок и конфликты между ними не входят в текущий объём. Технического запрета второго подключения пока нет.
+
+Поведение задано в src/app-definition.js: state, createServer, actions и operations. Точка сборки передаёт описание в createApplication вместе с requestRender. Фабрика создаёт общий ctx и вызывает actions по intent; операции вызываются явно кодом приложения. Input пока зависит от operations.clearStatus(ctx), поэтому runtime ещё не полностью универсален.
 
 ### Текущее состояние прототипа
 
@@ -322,7 +326,7 @@ VizNode — это не:
 - живые обновления дерева из Node в браузер через SSE;
 - DOM-события ввода и последовательная отправка input/action;
 - сохранение фокуса, выделения и неподтверждённого локального ввода при повторном DOM-рендере;
-- заменяемые визуальные пресеты, меняющие текущий DOM без изменения состояния приложения;
+- лаконичное светлое оформление, независимое от состояния приложения;
 - каналы observer и effects;
 - асинхронный демонстрационный сценарий перевода.
 
@@ -341,10 +345,10 @@ VizNode — это не:
 
 Прототип развивается последовательностью небольших вертикальных шагов:
 
-1. Проверить полный сценарий перевода в браузере, включая быстрый ввод с последующим Submit.
-2. Проверить продолжение одного сценария из Console в DOM и обратно.
+1. Дополнить выполненные ручные проверки перевода быстрым вводом с немедленным Submit и задержанными SSE-обновлениями.
+2. Автоматизировать проверенные вручную навигацию, синхронизацию полей, ошибки формы и результаты перевода в Console/DOM.
 3. Определить поведение при ошибке ввода, повторном действии и завершении асинхронной операции; добавить целевые тесты.
-4. Спроектировать понятный API приложения и проверить его на втором небольшом примере, отделив общие механизмы от банковской логики. Конкретный API пока не согласован и не реализован.
+4. Спроектировать понятный API приложения и проверить его на втором небольшом примере, отделив общие механизмы от банковской логики. Описание state/actions/operations уже реализовано; общие контракты обновления и жизненного цикла ещё предстоит уточнить.
 5. Формализовать и валидировать контракт UI-дерева, затем ввести заменяемый interface builder с детерминированным provider.
 6. Добавить необязательный AI provider за тем же валидируемым контрактом.
 
