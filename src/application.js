@@ -17,7 +17,7 @@ export function createApplication({
     }
 
     const server = createServer();
-
+    
     /** Общие зависимости обработчиков и операций. */
     const ctx = {
         state,
@@ -28,93 +28,7 @@ export function createApplication({
         notifyAppEvent,
     };
 
-    function notify(reason) {
-      notifyAppEvent("notify", { message: reason });
-    }
-
-    /** Уведомляет наблюдателей, но не вызывает render. */
-    function setStatus(phase, message) {
-      state.status.phase = phase;
-      state.status.message = message;
-      notifyStateChanged(state, `status_${phase}`);
-    }
-
-    /** Уведомляет наблюдателей, но не вызывает render. */
-    function clearStatus() {
-      state.status.phase = "idle";
-      state.status.message = "";
-      notifyStateChanged(state, "status_cleared");
-    }
-
-    /**
-     * Проверка формы на клиенте; бизнес-ограничения проверяет сервер.
-     * @param {{recipient: string, amount: string}} form
-     * @returns {{ok: true} | {ok: false, reason: string}}
-     */
-    function validateTransferForm(form) {
-      if (!form.recipient.trim()) {
-        return { ok: false, reason: "Recipient is required" };
-      }
-
-      if (!form.amount.trim()) {
-        return { ok: false, reason: "Amount is required" };
-      }
-
-      const amount = Number(form.amount);
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        return { ok: false, reason: "Amount must be a positive number" };
-      }
-
-      return { ok: true };
-    }
-
-    /** Управляет уведомлениями и render; Promise не ожидает отложенный сброс статуса. */
-    async function submitTransferFlow() {
-      const form = {
-        recipient: state.transferForm.recipient,
-        amount: state.transferForm.amount,
-      };
-
-      const validation = validateTransferForm(form);
-
-      if (!validation.ok) {
-        setStatus("error", validation.reason);
-        notify(validation.reason);
-        setTimeout(requestRender, 1200);
-        return;
-      }
-
-      setStatus("sending", "Sending transfer request...");
-      requestRender();
-
-      const response = await server.executeTransfer({
-        recipient: form.recipient,
-        amount: Number(form.amount),
-      });
-
-      if (!response.ok) {
-        setStatus("error", response.reason);
-        notify(response.reason);
-        requestRender();
-        return;
-      }
-
-      state.balance = response.data.balance;
-      state.transferForm.recipient = "";
-      state.transferForm.amount = "";
-      state.screen = "main";
-      setStatus("success", `Transfer completed. New balance: ${response.data.balance}`);
-      notifyStateChanged(state, "transfer_applied");
-
-      notify("Transfer completed");
-      requestRender();
-      setTimeout(() => {
-        clearStatus();
-        requestRender();
-      }, 1800);
-    }
-
+ 
     const actionHandlers = actions;
 
     /**
@@ -150,7 +64,7 @@ export function createApplication({
                 return false;
             }
 
-            clearStatus();
+            operations.clearStatus(ctx);
             notifyStateChanged(state, "input_changed");
             requestRender();
 

@@ -32,11 +32,11 @@ export const appDefinition = {
         /** Запускает перевод без ожидания его завершения. */
         submit_transfer(ctx) {
             ctx.notifyAppEvent("submit_transfer", {
-            recipient: ctx.state.transferForm.recipient,
-            amount: ctx.state.transferForm.amount,
-        });
+                recipient: ctx.state.transferForm.recipient,
+                amount: ctx.state.transferForm.amount,
+            });
 
-        void ctx.operations.submitTransferFlow(ctx);
+            void ctx.operations.submitTransferFlow(ctx);
         },
 
         back(ctx) {
