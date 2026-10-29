@@ -1,12 +1,12 @@
 :root {
     color-scheme: light;
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-    color: #202523;
-    background: #f6f7f6;
+    color: #242424;
+    background: #f5f5f5;
     font-synthesis: none;
-    --muted: #646d67;
-    --border: #dfe4e0;
-    --accent: #24644b;
+    --muted: #686868;
+    --border: #dedede;
+    --accent: #303030;
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100vh; }
@@ -31,7 +31,7 @@ body { margin: 0; min-height: 100vh; }
     place-items: center;
     width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: 3px;
     background: var(--accent);
     color: white;
     font-size: 19px;
@@ -60,30 +60,29 @@ body { margin: 0; min-height: 100vh; }
     margin: 0 auto 76px;
     padding: 36px;
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: 4px;
     background: #fff;
-    box-shadow: 0 4px 24px #20252305;
 }
 #app > p:first-child {
     margin: 0 0 28px;
-    color: #202523;
-    font-size: 28px;
-    font-weight: 650;
-    letter-spacing: -1px;
+    color: #242424;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
     line-height: 1.2;
 }
 p { margin: 0; line-height: 1.6; color: var(--muted); overflow-wrap: anywhere; }
 nav, section { display: grid; gap: 12px; }
 #app > * + * { margin-top: 24px; }
 h2 { margin: 0 0 4px; color: var(--muted); font-size: 13px; font-weight: 500; }
-section p { color: #202523; font-size: 20px; font-weight: 550; letter-spacing: -0.4px; }
+section p { color: #242424; font-size: 20px; font-weight: 550; letter-spacing: -0.4px; }
 label { display: grid; gap: 8px; }
 label + label { margin-top: 6px; }
 label span { font-size: 13px; font-weight: 550; }
 button, input {
     width: 100%;
     min-height: 46px;
-    border-radius: 9px;
+    border-radius: 3px;
     font: inherit;
     font-size: 14px;
 }
@@ -96,22 +95,22 @@ button {
     cursor: pointer;
     transition: background-color 140ms ease;
 }
-button:hover { background: #1a503b; }
+button:hover { background: #181818; }
 button[data-intent="back"] {
     border-color: var(--border);
     background: #fff;
-    color: #424c46;
+    color: #484848;
 }
-button[data-intent="back"]:hover { background: #f3f5f3; }
+button[data-intent="back"]:hover { background: #f3f3f3; }
 input {
     min-width: 0;
     padding: 11px 13px;
     border: 1px solid var(--border);
     background: #fff;
-    color: #202523;
+    color: #242424;
 }
-input::placeholder { color: #747e77; }
-input:hover { border-color: #a8b5ac; }
+input::placeholder { color: #767676; }
+input:hover { border-color: #a8a8a8; }
 button:focus-visible, input:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
