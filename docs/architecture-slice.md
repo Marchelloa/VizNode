@@ -23,7 +23,7 @@ DOM → browser-demo → HTTP bridge ──┘             ↓
 
 ## Границы ответственности
 
-- `application.js` не импортирует renderer, readline или DOM API. Он получает state, createServer, actions, operations и requestRender; создаёт сервер через переданную фабрику и общий ctx. Input пока вызывает конкретную operations.clearStatus(ctx).
+- `application.js` не импортирует renderer, readline или DOM API. Он получает state, services, actions, operations и requestRender; создаёт общий ctx, передавая готовые services без их инициализации. Input пока вызывает конкретную operations.clearStatus(ctx).
 - `app.js` собирает приложение, Console-адаптер и HTTP/SSE-мост. Общий loop строит дерево один раз для обоих представлений.
 - Renderer отображает дерево. Console-адаптер и browser-demo преобразуют действия в события; бизнес-обработчики через renderer не вызываются.
 - Браузер получает дерево, не импортирует state и не строит отдельное приложение. pendingInputs — временный локальный ввод до подтверждения.
@@ -44,7 +44,7 @@ createApplication({ ...appDefinition, requestRender });
 
 Строгой рекурсивной схемы и проверки разрешённых intent/bind пока нет. setByPath проверяет существование пути, что не равно разрешению редактировать это поле.
 
-Описание appDefinition находится в src/app-definition.js. actions содержит точки входа по intent; operations — вспомогательные функции и сценарии. ctx содержит state, operations, server, requestRender, notifyStateChanged и notifyAppEvent. dispatch вызывает handler(ctx); операции получают зависимости явно. Возвращаемый actionHandlers и переданный actions — один объект.
+Описание appDefinition находится в src/app-definition.js. actions содержит точки входа по intent; operations — вспомогательные функции и сценарии. ctx содержит state, operations, services, requestRender, notifyStateChanged и notifyAppEvent. dispatch вызывает handler(ctx); операции получают зависимости явно. Возвращаемый actionHandlers и переданный actions — один объект.
 
 ## Выполнение и отображение
 

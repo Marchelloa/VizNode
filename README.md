@@ -124,7 +124,7 @@ Both renderers operate simultaneously on the same state and receive the same nod
 
 The supported setup is one application, the console, and one browser tab. Multiple tabs and cross-tab editing conflicts are outside the current scope. The bridge does not yet enforce a single-tab restriction.
 
-Application behavior is defined in src/app-definition.js: state, createServer, actions and operations. The composition root passes this definition to createApplication with requestRender. The factory creates a shared ctx and calls actions by intent; operations are called explicitly by application code. Input still depends on operations.clearStatus(ctx), so the runtime is not yet fully generic.
+Application dependencies are prepared by application code; services is optional and defaults to an empty object. The banking demo supplies services.server, while the flight log needs no service. Application behavior is defined in src/app-definition.js: state, services, actions and operations. The composition root passes this definition to createApplication with requestRender. The factory creates a shared ctx and calls actions by intent; operations are called explicitly by application code. Input still depends on operations.clearStatus(ctx), so the runtime is not yet fully generic.
 
 ### Current Prototype Status
 
@@ -308,7 +308,7 @@ VizNode — это не:
 
 Поддерживаемый сценарий — одно приложение, консоль и одна браузерная вкладка. Несколько вкладок и конфликты между ними не входят в текущий объём. Технического запрета второго подключения пока нет.
 
-Поведение задано в src/app-definition.js: state, createServer, actions и operations. Точка сборки передаёт описание в createApplication вместе с requestRender. Фабрика создаёт общий ctx и вызывает actions по intent; операции вызываются явно кодом приложения. Input пока зависит от operations.clearStatus(ctx), поэтому runtime ещё не полностью универсален.
+Зависимости подготавливает приложение: services необязательно и по умолчанию равно пустому объекту. Банковское демо передаёт services.server, журнал обходится без сервисов. Поведение задано в src/app-definition.js: state, services, actions и operations. Точка сборки передаёт описание в createApplication вместе с requestRender. Фабрика создаёт общий ctx и вызывает actions по intent; операции вызываются явно кодом приложения. Input пока зависит от operations.clearStatus(ctx), поэтому runtime ещё не полностью универсален.
 
 ### Текущее состояние прототипа
 

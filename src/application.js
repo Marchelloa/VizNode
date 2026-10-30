@@ -2,12 +2,12 @@ import { notifyAppEvent, notifyStateChanged } from "./observer.js";
 import { setByPath } from "./state.js";
 
 /**
- * Подключает состояние, фабрику сервера, actions и operations.
- * Обработчики получают ctx; requestRender обновляет представления.
+ * Подключает состояние, сервисы, actions и operations.
+ * Обработчики получают общий ctx.
  */
 export function createApplication({ 
     state,
-    createServer,
+    services = {},
     actions,
     operations,
     requestRender,
@@ -16,13 +16,11 @@ export function createApplication({
         throw new TypeError("requestRender must be a function");
     }
 
-    const server = createServer?.();
-    
     /** Общие зависимости обработчиков и операций. */
     const ctx = {
         state,
         operations,
-        server,
+        services,
         requestRender,
         notifyStateChanged,
         notifyAppEvent,

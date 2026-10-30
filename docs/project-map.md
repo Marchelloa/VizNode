@@ -21,7 +21,7 @@ DOM action/input подключены. Браузер получает гото�
 | --- | --- |
 | `src/app.js` | Сборка приложения, readline, Console-адаптер, запуск browser bridge, общий render loop и завершение процесса. |
 | `src/application.js` | Общий dispatch, создание сервера и ctx; input вызывает переданную operations.clearStatus(ctx). |
-| `src/app-definition.js` | Описание приложения: state, createServer, actions и operations. |
+| `src/app-definition.js` | Описание приложения: state, services, actions и operations. |
 | `src/state.js` | Общее состояние банковского примера и запись по существующему пути через setByPath. Allowlist путей пока отсутствует. |
 | `src/tree.js` | Чистое построение дерева для экранов main, balance и transfer. |
 | `src/nodes.js` | Фабрики text, action, input, menu и container. Корень дерева — массив. |
@@ -49,7 +49,7 @@ await application.dispatch({
 });
 ```
 
-appDefinition импортируется из src/app-definition.js и содержит state, createServer, actions, operations. Фабрика вызывает переданный createServer и создаёт ctx: state, operations, server, requestRender, notifyStateChanged, notifyAppEvent. dispatch передаёт ctx обработчикам; операции получают его явно при необходимости. actionHandlers ссылается на actions. Дерево по-прежнему подключается отдельно в app.js.
+appDefinition импортируется из src/app-definition.js и содержит state, services, actions, operations. Приложение подготавливает сервисы, а фабрика передаёт их без создания в ctx: state, operations, services, requestRender, notifyStateChanged, notifyAppEvent. dispatch передаёт ctx обработчикам; операции получают его явно при необходимости. actionHandlers ссылается на actions. Дерево по-прежнему подключается отдельно в app.js.
 
 Структурный перенос завершён: все локальные прикладные функции удалены, input вызывает operations.clearStatus(ctx). Предметная логика находится в operations; привязка к имени clearStatus остаётся известным ограничением. Универсальный механизм реакций на ввод не вводился.
 

@@ -1,10 +1,10 @@
 import readline from "readline";
 
 import { createApplication } from "./application.js";
-// import { appDefinition } from "./app-definition.js";
-// import { buildTree } from "./tree.js";
-import { flightAppDefinition as appDefinition } from "./flight-app-definition.js";
-import { buildFlightTree as buildTree } from "./flight-tree.js";
+import { appDefinition } from "./app-definition.js";
+import { buildTree } from "./tree.js";
+// import { flightAppDefinition as appDefinition } from "./flight-app-definition.js";
+// import { buildFlightTree as buildTree } from "./flight-tree.js";
 
 import { renderConsole, print, spacer } from "./console-renderer.js";
 import { startBrowserBridge } from "./browser-bridge.js";

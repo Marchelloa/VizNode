@@ -2,17 +2,20 @@ import { state } from "./state.js"
 import { createServer } from "./server.js";
 
 // ctx создаётся в createApplication и передаётся обработчикам; операции получают его явно.
-// Поля: state, operations, server, requestRender, notifyStateChanged, notifyAppEvent.
+// Поля: state, operations, services, requestRender, notifyStateChanged, notifyAppEvent.
 
 /**
  * Описание приложения для createApplication.
  * actions связывает intent с обработчиками; operations содержит внутреннюю логику.
- * state используется без копирования; createServer вызывается при создании приложения.
+ * state используется без копирования; services содержит подготовленные зависимости.
  */
 export const appDefinition = {
     state,
 
-    createServer,
+    /** Внешние зависимости приложения; здесь сервер заменён эмулятором. */
+    services: {
+        server: createServer(),
+    },
 
     /** Обработчики интерфейса; ключ — intent из дерева. */
     actions: {
@@ -109,7 +112,7 @@ export const appDefinition = {
             ctx.operations.setStatus(ctx, "sending", "Sending transfer request...");
             ctx.requestRender();
 
-            const response = await ctx.server.executeTransfer({
+            const response = await ctx.services.server.executeTransfer({
                 recipient: form.recipient,
                 amount: Number(form.amount),
             });
