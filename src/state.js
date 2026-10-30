@@ -5,10 +5,7 @@ const state = {
     recipient: "",
     amount: "",
   },
-  status: {
-    phase: "idle",
-    message: "",
-  },
+  message: "",
 };
 
 /**

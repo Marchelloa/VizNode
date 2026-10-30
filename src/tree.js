@@ -8,10 +8,10 @@ import {
 
 /** Строит общее для renderer дерево, не изменяя состояние. */
 export function buildTree(currentState) {
-  const statusNodes = currentState.status.message
+  const statusNodes = currentState.message
     ? [
         containerNode("Status", [
-          textNode(currentState.status.message),
+          textNode(currentState.message),
         ]),
       ]
     : [];

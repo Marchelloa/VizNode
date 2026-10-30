@@ -1,5 +1,6 @@
 import { notifyAppEvent, notifyStateChanged } from "./observer.js";
 import { setByPath } from "./state.js";
+import { RuntimePhase } from "./runtime.js";
 
 /**
  * Подключает состояние, сервисы, actions и operations.
@@ -16,11 +17,15 @@ export function createApplication({
         throw new TypeError("requestRender must be a function");
     }
 
+    // Служебное состояние выполнения, отдельное от данных приложения.
+    const runtime = { phase: RuntimePhase.IDLE };
+
     /** Общие зависимости обработчиков и операций. */
     const ctx = {
         state,
         operations,
         services,
+        runtime,
         requestRender,
         notifyStateChanged,
         notifyAppEvent,
@@ -74,6 +79,7 @@ export function createApplication({
 
     return {
         state,
+        runtime,
         actionHandlers,
         dispatch,
     };

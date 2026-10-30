@@ -1,6 +1,7 @@
 import readline from "readline";
 
 import { createApplication } from "./application.js";
+import { RuntimePhase } from "./runtime.js";
 import { appDefinition } from "./app-definition.js";
 import { buildTree } from "./tree.js";
 // import { flightAppDefinition as appDefinition } from "./flight-app-definition.js";
@@ -130,7 +131,7 @@ function loop() {
   currentActionMap = renderConsole(tree);
   browserBridge.publishTree(tree);
 
-  if (application.state.status?.phase === "sending") {
+  if (application.runtime.phase === RuntimePhase.PENDING) {
     return;
   }
 

@@ -126,6 +126,8 @@ The supported setup is one application, the console, and one browser tab. Multip
 
 Application dependencies are prepared by application code; services is optional and defaults to an empty object. The banking demo supplies services.server, while the flight log needs no service. Application behavior is defined in src/app-definition.js: state, services, actions and operations. The composition root passes this definition to createApplication with requestRender. The factory creates a shared ctx and calls actions by intent; operations are called explicitly by application code. Input still depends on operations.clearStatus(ctx), so the runtime is not yet fully generic.
 
+Execution state is separate from application data: the shared ctx.runtime/application.runtime uses RuntimePhase (IDLE, PENDING, SUCCESS, ERROR). The console loop checks PENDING after rendering; application messages remain in state.message in the banking demo. Runtime changes do not automatically block input or publish state snapshots. The required clearStatus call on input remains an open coupling to remove.
+
 ### Current Prototype Status
 
 Implemented:
@@ -309,6 +311,8 @@ VizNode — это не:
 Поддерживаемый сценарий — одно приложение, консоль и одна браузерная вкладка. Несколько вкладок и конфликты между ними не входят в текущий объём. Технического запрета второго подключения пока нет.
 
 Зависимости подготавливает приложение: services необязательно и по умолчанию равно пустому объекту. Банковское демо передаёт services.server, журнал обходится без сервисов. Поведение задано в src/app-definition.js: state, services, actions и operations. Точка сборки передаёт описание в createApplication вместе с requestRender. Фабрика создаёт общий ctx и вызывает actions по intent; операции вызываются явно кодом приложения. Input пока зависит от operations.clearStatus(ctx), поэтому runtime ещё не полностью универсален.
+
+Состояние выполнения отделено от данных приложения: общий ctx.runtime/application.runtime использует RuntimePhase (IDLE, PENDING, SUCCESS, ERROR). Console-loop проверяет PENDING после render, прикладные сообщения банковского демо остаются в state.message. Изменение runtime автоматически не блокирует ввод и не публикует снимок state. Обязательный вызов clearStatus при input остаётся открытым вопросом.
 
 ### Текущее состояние прототипа
 

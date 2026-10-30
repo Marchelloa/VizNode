@@ -2,6 +2,12 @@
 
 Актуализировано: 29 октября 2026 года по текущему коду.
 
+## Состояние выполнения
+
+createApplication создаёт runtime отдельно от прикладного state. Один объект доступен через ctx.runtime и application.runtime. RuntimePhase из runtime.js задаёт IDLE, PENDING, SUCCESS, ERROR через Object.freeze. Операции явно меняют phase; loop проверяет PENDING после render и не выводит новый prompt. Это не блокировка действий и не автоматическое ожидание Promise.
+
+Банковское сообщение находится в state.message и отображается деревом. state.status больше нет. clearStatus пока сбрасывает и runtime.phase, и message; обязательный вызов этой операции из input остаётся нерешённой зависимостью ядра. Runtime не входит в снимки state наблюдателей.
+
 ## Общий цикл
 
 ```text

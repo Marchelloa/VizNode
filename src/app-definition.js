@@ -1,8 +1,9 @@
 import { state } from "./state.js"
 import { createServer } from "./server.js";
+import { RuntimePhase } from "./runtime.js";
 
 // ctx создаётся в createApplication и передаётся обработчикам; операции получают его явно.
-// Поля: state, operations, services, requestRender, notifyStateChanged, notifyAppEvent.
+// Поля: state, operations, services, runtime, requestRender, notifyStateChanged, notifyAppEvent.
 
 /**
  * Описание приложения для createApplication.
@@ -80,15 +81,17 @@ export const appDefinition = {
 
         /** Уведомляет наблюдателей, но не вызывает render. */
         setStatus(ctx, phase, message) {
-            ctx.state.status.phase = phase;
-            ctx.state.status.message = message;
-            ctx.notifyStateChanged(ctx.state, `status_${phase}`);
+            ctx.runtime.phase = phase;
+            ctx.state.message = message;
+            // Сохраняем прежнее имя события демо при общей фазе PENDING.
+            const reason = phase === RuntimePhase.PENDING ? "sending" : phase;
+            ctx.notifyStateChanged(ctx.state, `status_${reason}`);
         },
 
         /** Уведомляет наблюдателей, но не вызывает render. */
         clearStatus(ctx) {
-            ctx.state.status.phase = "idle";
-            ctx.state.status.message = "";
+            ctx.runtime.phase = RuntimePhase.IDLE;
+            ctx.state.message = "";
             ctx.notifyStateChanged(ctx.state, "status_cleared");
 
         },
@@ -103,13 +106,13 @@ export const appDefinition = {
             const validation = ctx.operations.validateTransferForm(form);
 
             if (!validation.ok) {
-                ctx.operations.setStatus(ctx, "error", validation.reason);
+                ctx.operations.setStatus(ctx, RuntimePhase.ERROR, validation.reason);
                 ctx.operations.notify(ctx, validation.reason);
                 setTimeout(ctx.requestRender, 1200);
                 return;
             }
 
-            ctx.operations.setStatus(ctx, "sending", "Sending transfer request...");
+            ctx.operations.setStatus(ctx, RuntimePhase.PENDING, "Sending transfer request...");
             ctx.requestRender();
 
             const response = await ctx.services.server.executeTransfer({
@@ -118,7 +121,7 @@ export const appDefinition = {
             });
 
             if (!response.ok) {
-                ctx.operations.setStatus(ctx, "error", response.reason);
+                ctx.operations.setStatus(ctx, RuntimePhase.ERROR, response.reason);
                 ctx.operations.notify(ctx, response.reason);
                 ctx.requestRender();
                 return;
@@ -131,7 +134,7 @@ export const appDefinition = {
 
             ctx.operations.setStatus(
                 ctx,
-                "success", 
+                RuntimePhase.SUCCESS,
                 `Transfer completed. New balance: ${response.data.balance}`,
             );
             ctx.notifyStateChanged(ctx.state, "transfer_applied");
