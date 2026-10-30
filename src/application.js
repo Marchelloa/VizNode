@@ -16,7 +16,7 @@ export function createApplication({
         throw new TypeError("requestRender must be a function");
     }
 
-    const server = createServer();
+    const server = createServer?.();
     
     /** Общие зависимости обработчиков и операций. */
     const ctx = {
