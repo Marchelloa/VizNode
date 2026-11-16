@@ -67,7 +67,10 @@ export function createApplication({
                 return false;
             }
 
-            operations.clearStatus(ctx);
+            // Необязательное сообщение очищается при вводе; фаза выполнения сохраняется.
+            if (Object.hasOwn(state, "message")) {
+                state.message = "";
+            }
             notifyStateChanged(state, "input_changed");
             requestRender();
 

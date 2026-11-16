@@ -88,14 +88,6 @@ export const appDefinition = {
             ctx.notifyStateChanged(ctx.state, `status_${reason}`);
         },
 
-        /** Уведомляет наблюдателей, но не вызывает render. */
-        clearStatus(ctx) {
-            ctx.runtime.phase = RuntimePhase.IDLE;
-            ctx.state.message = "";
-            ctx.notifyStateChanged(ctx.state, "status_cleared");
-
-        },
-
         /** Управляет уведомлениями и render; Promise не ожидает отложенный сброс статуса. */
         async submitTransferFlow(ctx) {
             const form = {
@@ -142,8 +134,11 @@ export const appDefinition = {
             ctx.operations.notify(ctx, "Transfer completed");
             ctx.requestRender();
 
+            // После показа результата возвращаем фазу в IDLE и обновляем представления.
             setTimeout(() => {
-                ctx.operations.clearStatus(ctx);
+                ctx.runtime.phase = RuntimePhase.IDLE;
+                ctx.state.message = "";
+                ctx.notifyStateChanged(ctx.state, "status_cleared");
                 ctx.requestRender();
             }, 1800);
         },

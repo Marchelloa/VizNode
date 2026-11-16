@@ -1,10 +1,10 @@
 # VizNode — карта проекта
 
-Актуализировано: 29 октября 2026 года по локальному коду и проверкам пользователя.
+Актуализировано: 16 ноября 2026 года по локальному коду. Полный ручной прогон последних изменений ещё не подтверждён.
 
 ## Обновление runtime/message
 
-src/runtime.js экспортирует замороженный набор RuntimePhase: IDLE, PENDING, SUCCESS, ERROR. createApplication возвращает runtime вместе со state, actionHandlers и dispatch; тот же runtime доступен обработчикам через ctx. Loop читает runtime.phase вместо прикладного state.status.phase. Банковское дерево читает state.message; вложенный status удалён. Обязательный operations.clearStatus(ctx) при input пока остаётся отдельным вопросом. Сквозная проверка нового этапа ещё не подтверждена.
+src/runtime.js экспортирует замороженный набор RuntimePhase: IDLE, PENDING, SUCCESS, ERROR. createApplication возвращает runtime вместе со state, actionHandlers и dispatch; тот же runtime доступен обработчикам через ctx. Loop читает runtime.phase вместо прикладного state.status.phase. Банковское дерево читает state.message; вложенный status удалён. operations.clearStatus удалена. Успешный input очищает собственное поле state.message при его наличии, сохраняя runtime.phase, затем уведомляет наблюдателей и вызывает render. onInput в текущем API отсутствует. Сквозная проверка нового этапа ещё не подтверждена.
 
 ## Рабочая модель
 
@@ -24,7 +24,7 @@ DOM action/input подключены. Браузер получает гото�
 | Файл | Ответственность |
 | --- | --- |
 | `src/app.js` | Сборка приложения, readline, Console-адаптер, запуск browser bridge, общий render loop и завершение процесса. |
-| `src/application.js` | Общий dispatch, создание сервера и ctx; input вызывает переданную operations.clearStatus(ctx). |
+| `src/application.js` | Общий dispatch, создание ctx и runtime, передача готовых services; input очищает необязательное state.message, сохраняет фазу и вызывает уведомление и render. |
 | `src/app-definition.js` | Описание приложения: state, services, actions и operations. |
 | `src/state.js` | Общее состояние банковского примера и запись по существующему пути через setByPath. Allowlist путей пока отсутствует. |
 | `src/tree.js` | Чистое построение дерева для экранов main, balance и transfer. |
@@ -55,7 +55,7 @@ await application.dispatch({
 
 appDefinition импортируется из src/app-definition.js и содержит state, services, actions, operations. Приложение подготавливает сервисы, а фабрика передаёт их без создания в ctx: state, operations, services, requestRender, notifyStateChanged, notifyAppEvent. dispatch передаёт ctx обработчикам; операции получают его явно при необходимости. actionHandlers ссылается на actions. Дерево по-прежнему подключается отдельно в app.js.
 
-Структурный перенос завершён: все локальные прикладные функции удалены, input вызывает operations.clearStatus(ctx). Предметная логика находится в operations; привязка к имени clearStatus остаётся известным ограничением. Универсальный механизм реакций на ввод не вводился.
+Предметная логика находится в operations. Input обрабатывает запись значения и очистку необязательного message в ядре. Банковский таймер после успеха напрямую сбрасывает фазу и сообщение, уведомляет наблюдателей и вызывает render; защита от сброса более новой операции отсутствует.
 
 ## Жизненный цикл
 

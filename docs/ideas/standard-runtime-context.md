@@ -2,7 +2,21 @@
 
 ## Статус документа
 
+Это концептуальный документ, а не справочник действующего API. Методы setStatus(), runLoop() и другие возможности в эскизах ниже не следует считать реализованными или согласованными.
+
+В текущем коде runtime — объект с полем phase; RuntimePhase задаёт IDLE, PENDING, SUCCESS, ERROR. Он доступен через application.runtime и ctx.runtime. Остальные возможности (state, services, operations, requestRender и уведомления) передаются в ctx отдельно. Актуальный API сверять по src/application.js и docs/architecture-slice.md; дальнейшее расширение требует отдельного обсуждения.
+
 Этот документ описывает направление развития ядра VizNode. Первый минимальный renderer-independent контракт уже реализован через `createApplication(...)`, но окончательный runtime-класс и его API ещё не сформированы.
+
+## Текущее состояние кода — 16 ноября 2026 года
+
+Успешный input в createApplication выполняет setByPath, затем при Object.hasOwn(state, "message") присваивает state.message = "", вызывает notifyStateChanged(state, "input_changed") и requestRender(). Фаза runtime.phase при вводе сохраняется, включая PENDING. Необязательное поле message принято как соглашение каркаса.
+
+operations.clearStatus удалена вместе с вызовами. Обработчик onInput был рассмотрен и удалён; текущий API его не содержит. Банковская setStatus остаётся в operations и меняет фазу, сообщение и уведомляет наблюдателей.
+
+После успеха банковский таймер через 1800 мс напрямую устанавливает IDLE, очищает message, уведомляет с причиной status_cleared и вызывает requestRender(). Таймер сбрасывает состояние без проверки более новой операции. Защита от повторной отправки и пересечения операций пока отсутствует; submit_transfer запускает flow через void.
+
+Проверены синтаксис изменённых JS-файлов, dispatch с полем message и без него, очистка сообщения, сохранение PENDING и вызов render. Полный ручной прогон Console/DOM банка и журнала после этих правок ещё не подтверждён. Изменения application.js и app-definition.js находятся в рабочем дереве поверх 7f1d8bc.
 
 ## Мотивация
 
